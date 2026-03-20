@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Daily Streak</title>
+    <title>Daily Streak Duo</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
+    
     <style>
         body {
             background-color: #0f0f11;
@@ -17,7 +20,6 @@
             user-select: none; -webkit-tap-highlight-color: transparent;
         }
 
-        
         .top-section { text-align: center; margin-top: 20px; width: 100%; }
         #pet-name { 
             font-size: 22px; font-weight: bold; color: #fff; 
@@ -27,16 +29,13 @@
         #streak-count { font-size: 80px; font-weight: 900; color: #ff4500; margin: 0; line-height: 1; }
         .sub-text { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
 
-        
         .img-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
         #pet-img { 
             width: 80vw; max-width: 350px; max-height: 40vh; object-fit: contain; 
             transition: transform 0.3s ease; 
         }
 
-        
         .bottom-section { width: 90%; margin-bottom: 30px; display: flex; flex-direction: column; gap: 10px; }
-        
         button {
             width: 100%; height: 60px; border-radius: 16px; border: none;
             font-size: 18px; font-weight: 800; cursor: pointer; transition: 0.2s;
@@ -64,7 +63,7 @@
     <div class="bottom-section">
         <button id="btn-invite" onclick="inviteFriend()">ПОЗВАТЬ ДРУГА (БЕЗ НЕГО НЕ НАЧАТЬ)</button>
         <button id="btn-action" onclick="makeCheckIn()">ОТМЕТИТЬСЯ</button>
-        <div id="timer"></div>
+        <div id="timer">Ожидание подключения...</div>
     </div>
 
     <script>
@@ -72,16 +71,29 @@
         tg.expand();
         tg.headerColor = '#0f0f11';
 
-        
-        let streak = parseInt(localStorage.getItem('final_v1_streak')) || 0;
-        let lastTime = parseInt(localStorage.getItem('final_v1_time')) || 0;
-        let isFriendConnected = localStorage.getItem('final_v1_friend') === 'true';
-        let petName = localStorage.getItem('final_v1_name') || 'ИМЯ СИРИЧИКА';
+        // --- КОНФИГУРАЦИЯ FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
+            authDomain: "dailykgame-d75d8.firebaseapp.com",
+            databaseURL: "https://console.firebase.google.com/project/dailykgame-d75d8/database/dailykgame-d75d8-default-rtdb/data/~2F", 
+            projectId: "dailykgame-d75d8",
+            appId: "1:762552994938:web:2fdfb8758aa0899e2c6eb"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
+        // --- ЛОГИКА ИГРЫ ---
+        let streak = 0;
+        let lastTime = 0;
+        let petName = 'СИРИЧИК';
         
-        if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
-            isFriendConnected = true;
-            localStorage.setItem('final_v1_friend', 'true');
+        const myId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : "test_user";
+        const startParam = tg.initDataUnsafe.start_param; // ID того, кто пригласил
+
+        // Создаем общий ID для пары (всегда одинаковый для двоих)
+        let pairId = null;
+        if (startParam) {
+            pairId = (myId < startParam) ? `${myId}_${startParam}` : `${startParam}_${myId}`;
         }
 
         const elName = document.getElementById('pet-name');
@@ -91,11 +103,26 @@
         const btnAction = document.getElementById('btn-action');
         const elTimer = document.getElementById('timer');
 
+        // Если пара создана, подключаемся к базе
+        if (pairId) {
+            btnInvite.style.display = 'none';
+            btnAction.style.display = 'block';
+
+            db.ref('pairs/' + pairId).on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    streak = data.streak || 0;
+                    lastTime = data.lastTime || 0;
+                    petName = data.name || 'СИРИЧИК';
+                }
+                updateScreen();
+            });
+        }
+
         function updateScreen() {
             elName.innerText = petName;
             elStreak.innerText = streak;
 
-            
             if (streak < 10) elImg.src = 'stage0.png';
             else if (streak < 20) elImg.src = 'stage10.png';
             else if (streak < 50) elImg.src = 'stage20.png';
@@ -105,76 +132,59 @@
         }
 
         function checkStatus() {
+            if (!pairId) return;
             const now = Date.now();
             const oneDay = 24 * 60 * 60 * 1000;
 
-            if (!isFriendConnected) {
-               
-                btnInvite.style.display = 'block';
-                btnAction.style.display = 'none';
-                elTimer.innerText = 'Серия остановлена. Ждем напарника.';
+            if (now - lastTime < oneDay) {
+                btnAction.disabled = true;
+                btnAction.innerText = 'УЖЕ ОТМЕТИЛСЯ';
+                const timeLeft = oneDay - (now - lastTime);
+                updateTimer(timeLeft);
             } else {
-                
-                btnInvite.style.display = 'none';
-                btnAction.style.display = 'block';
-
-                if (now - lastTime < oneDay) {
-                    btnAction.disabled = true;
-                    btnAction.innerText = 'УЖЕ ОТМЕТИЛСЯ';
-                    startCountdown(oneDay - (now - lastTime));
-                } else {
-                    btnAction.disabled = false;
-                    btnAction.innerText = 'ОТМЕТИТЬСЯ НА СЕГОДНЯ';
-                    elTimer.innerText = 'Можно растить сиричика!';
-                }
+                btnAction.disabled = false;
+                btnAction.innerText = 'ОТМЕТИТЬСЯ НА СЕГОДНЯ';
+                elTimer.innerText = 'Можно растить сиричика!';
             }
         }
 
-        function startCountdown(ms) {
-            const interval = setInterval(() => {
-                ms -= 1000;
-                if (ms <= 0) {
-                    clearInterval(interval);
-                    checkStatus();
-                    return;
-                }
-                const h = Math.floor(ms / 3600000);
-                const m = Math.floor((ms % 3600000) / 60000);
-                const s = Math.floor((ms % 60000) / 1000);
-                elTimer.innerText = `Следующий этап через: ${h}ч ${m}м ${s}с`;
-            }, 1000);
+        function updateTimer(ms) {
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            elTimer.innerText = `Доступно через: ${h}ч ${m}м ${s}с`;
         }
 
         function makeCheckIn() {
-            streak++;
-            lastTime = Date.now();
-            localStorage.setItem('final_v1_streak', streak);
-            localStorage.setItem('final_v1_time', lastTime);
+            if (!pairId) return;
+            
+            // Сохраняем прогресс в общую базу
+            db.ref('pairs/' + pairId).update({
+                streak: streak + 1,
+                lastTime: Date.now()
+            });
             
             tg.HapticFeedback.impactOccurred('heavy');
             elImg.style.transform = 'scale(1.1)';
             setTimeout(() => { elImg.style.transform = 'scale(1)'; }, 200);
-            
-            updateScreen();
         }
 
         function changeName() {
             const newName = prompt('Как назовем сиричика?', petName);
-            if (newName && newName.trim() !== '') {
-                petName = newName.trim();
-                localStorage.setItem('final_v1_name', petName);
-                updateScreen();
+            if (newName && newName.trim() !== '' && pairId) {
+                db.ref('pairs/' + pairId).update({ name: newName.trim() });
             }
         }
 
         function inviteFriend() {
-            
             const botUsername = 'DailykDuoBot'; 
-            const link = `https://t.me/${botUsername}/app?startapp=ref_active`;
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Бро, залетай растить сиричика со мной! Без тебя серия не начнется.`);
+            // Замени 'play' на название своего приложения в BotFather (Short Name)
+            const link = `https://t.me/${botUsername}/play?startapp=${myId}`;
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Залетай растить сиричика со мной! Без тебя серия не начнется.`);
         }
 
-        updateScreen();
+        // Запуск таймера каждую секунду
+        setInterval(checkStatus, 1000);
     </script>
 </body>
 </html>
