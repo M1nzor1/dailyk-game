@@ -15,13 +15,7 @@
             align-items: center; justify-content: center; height: 100vh;
             overflow: hidden; user-select: none; position: relative;
         }
-
-        .main-container {
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: center; gap: 5px; width: 100%; max-width: 380px;
-            padding: 10px; box-sizing: border-box;
-        }
-
+        .main-container { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; width: 100%; max-width: 380px; padding: 10px; box-sizing: border-box; }
         .support-btn {
             position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
             background: rgba(255, 215, 0, 0.15); border: 1px solid rgba(255, 215, 0, 0.4);
@@ -29,20 +23,15 @@
             font-size: 10px; font-weight: bold; cursor: pointer;
             writing-mode: vertical-rl; text-orientation: mixed; z-index: 10;
         }
-
         #streak-count { font-size: 85px; font-weight: 900; color: #ff4500; margin: 0; line-height: 0.8; }
         .sub-text { font-size: 11px; color: #666; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
         #pet-name { font-size: 22px; font-weight: bold; color: #fff; cursor: pointer; text-decoration: underline dashed #555; }
         .img-container { margin: 10px 0; }
-        #pet-img { width: 65vw; max-width: 260px; transition: transform 0.2s; }
+        #pet-img { width: 65vw; max-width: 260px; }
         .bottom-section { width: 100%; display: flex; flex-direction: column; gap: 10px; align-items: center; }
-        
-        button {
-            width: 85%; height: 50px; border-radius: 16px; border: none;
-            font-size: 16px; font-weight: 800; cursor: pointer;
-        }
-        #btn-invite { background-color: #34c759; color: white; }
-        #btn-action { background-color: #007aff; color: white; display: none; }
+        button { width: 85%; height: 55px; border-radius: 16px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; }
+        #btn-invite { background-color: #34c759; color: white; margin-top: 10px; }
+        #btn-action { background-color: #007aff; color: white; }
         #btn-action:disabled { background-color: #2c2c2e; color: #636366; }
         #timer { text-align: center; font-size: 12px; color: #888; margin-top: 5px; }
     </style>
@@ -61,9 +50,9 @@
         </div>
 
         <div class="bottom-section">
-            <button id="btn-invite" onclick="inviteFriend()">ПОЗВАТЬ ДРУГА</button>
             <button id="btn-action" onclick="makeCheckIn()">ОТМЕТИТЬСЯ</button>
-            <div id="timer">Подключение к базе...</div>
+            <button id="btn-invite" onclick="inviteFriend()">ПОЗВАТЬ ДРУГА</button>
+            <div id="timer">Загрузка...</div>
         </div>
     </div>
 
@@ -71,7 +60,6 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // ОДИН ЧИСТЫЙ КОНФИГ
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
             authDomain: "dailykgame-d75d8.firebaseapp.com",
@@ -86,27 +74,18 @@
         let streak = 0; let lastTime = 0; let petName = 'СИРИЧИК';
         const myId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : "dev";
         const startParam = tg.initDataUnsafe.start_param;
-        let pairId = null;
+        
+        // ВСЕГДА создаем ID (либо одиночный, либо парный)
+        let storageId = (startParam && startParam !== myId) 
+            ? ((myId < startParam) ? `${myId}_${startParam}` : `${startParam}_${myId}`)
+            : `solo_${myId}`;
 
-        // Логика создания комнаты
-        if (startParam && startParam !== myId) {
-            pairId = (myId < startParam) ? `${myId}_${startParam}` : `${startParam}_${myId}`;
-        }
-
-        if (pairId) {
-            document.getElementById('btn-invite').style.display = 'none';
-            document.getElementById('btn-action').style.display = 'block';
-            
-            db.ref('pairs/' + pairId).on('value', (snap) => {
-                const data = snap.val() || { streak: 0, lastTime: 0, name: 'СИРИЧИК' };
-                streak = data.streak; lastTime = data.lastTime; petName = data.name;
-                updateUI();
-            }, (error) => {
-                document.getElementById('timer').innerText = "Ошибка базы!";
-            });
-        } else {
-            document.getElementById('timer').innerText = "Нажми кнопку приглашения!";
-        }
+        // Подключаемся к базе СРАЗУ
+        db.ref('pairs/' + storageId).on('value', (snap) => {
+            const data = snap.val() || { streak: 0, lastTime: 0, name: 'СИРИЧИК' };
+            streak = data.streak; lastTime = data.lastTime; petName = data.name;
+            updateUI();
+        });
 
         function updateUI() {
             document.getElementById('pet-name').innerText = petName;
@@ -119,17 +98,16 @@
             const oneDay = 24 * 60 * 60 * 1000;
             const btn = document.getElementById('btn-action');
             if (now - lastTime < oneDay) {
-                btn.disabled = true; btn.innerText = 'ОТМЕЧЕН';
+                btn.disabled = true; btn.innerText = 'УЖЕ ОТМЕЧЕН';
                 document.getElementById('timer').innerText = "Заходи завтра!";
             } else {
                 btn.disabled = false; btn.innerText = 'ОТМЕТИТЬСЯ';
-                document.getElementById('timer').innerText = "Пора растить!";
+                document.getElementById('timer').innerText = "Расти Сиричика!";
             }
         }
 
         function makeCheckIn() {
-            if (!pairId) return;
-            db.ref('pairs/' + pairId).update({ streak: streak + 1, lastTime: Date.now() });
+            db.ref('pairs/' + storageId).update({ streak: streak + 1, lastTime: Date.now() });
             tg.HapticFeedback.impactOccurred('heavy');
         }
 
@@ -146,7 +124,7 @@
 
         function changeName() {
             const n = prompt('Придумай имя:', petName);
-            if (n && pairId) db.ref('pairs/' + pairId).update({ name: n.substring(0, 15) });
+            if (n) db.ref('pairs/' + storageId).update({ name: n.substring(0, 15) });
         }
 
         setInterval(checkStatus, 30000);
