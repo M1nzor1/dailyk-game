@@ -10,57 +10,77 @@
     
     <style>
         body {
-            background-color: #0f0f11; color: #ffffff; font-family: sans-serif;
+            background-color: #0f0f11; color: #ffffff; font-family: -apple-system, sans-serif;
             margin: 0; padding: 0; display: flex; flex-direction: column;
-            align-items: center; justify-content: space-between;
-            height: 100vh; overflow: hidden; user-select: none;
+            align-items: center; justify-content: center; height: 100vh;
+            overflow: hidden; user-select: none;
         }
-        .top-section { text-align: center; margin-top: 20px; }
-        #pet-name { font-size: 22px; font-weight: bold; color: #fff; cursor: pointer; text-decoration: underline dashed #555; }
-        #streak-count { font-size: 80px; font-weight: 900; color: #ff4500; margin: 0; }
-        .img-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-        #pet-img { width: 80vw; max-width: 350px; transition: transform 0.2s; }
-        .bottom-section { width: 90%; margin-bottom: 30px; display: flex; flex-direction: column; gap: 10px; }
+
+        .main-container {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 8px; width: 100%; max-width: 380px;
+            padding: 20px; box-sizing: border-box;
+        }
+
+        .support-author {
+            background: rgba(255, 215, 0, 0.1); border: 1px solid rgba(255, 215, 0, 0.3);
+            color: #ffb900; padding: 6px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: bold; cursor: pointer; margin-bottom: 10px;
+        }
+
+        #pet-name { font-size: 20px; font-weight: bold; color: #fff; cursor: pointer; text-decoration: underline dashed #444; }
+        #streak-count { font-size: 75px; font-weight: 900; color: #ff4500; margin: 0; line-height: 0.8; }
+        .sub-text { font-size: 11px; color: #666; letter-spacing: 1px; text-transform: uppercase; }
+
+        .img-container { margin: 20px 0; }
+        #pet-img { width: 70vw; max-width: 280px; transition: transform 0.2s; }
+
+        .bottom-section { width: 100%; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+        
         button {
-            width: 100%; height: 60px; border-radius: 16px; border: none;
-            font-size: 18px; font-weight: 800; cursor: pointer;
+            width: 90%; height: 55px; border-radius: 16px; border: none;
+            font-size: 17px; font-weight: 800; cursor: pointer; transition: 0.2s;
         }
         #btn-invite { background-color: #34c759; color: white; }
         #btn-action { background-color: #007aff; color: white; display: none; }
         #btn-action:disabled { background-color: #2c2c2e; color: #636366; }
-        #timer { text-align: center; font-size: 14px; color: #888; }
+        
+        #timer { text-align: center; font-size: 13px; color: #888; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="top-section">
+    <div class="main-container">
+        <div class="support-author" onclick="supportMe()">⭐ ПОДДЕРЖАТЬ (15 ⭐)</div>
+        
         <div id="pet-name" onclick="changeName()">СИРИЧИК</div>
         <div id="streak-count">0</div>
-        <div style="font-size: 12px; color: #666;">ДНЕЙ СЕРИИ</div>
-    </div>
+        <div class="sub-text">ДНЕЙ СЕРИИ</div>
 
-    <div class="img-container">
-        <img id="pet-img" src="stage0.png">
-    </div>
+        <div class="img-container">
+            <img id="pet-img" src="stage0.png" alt="Pet">
+        </div>
 
-    <div class="bottom-section">
-        <button id="btn-invite" onclick="inviteFriend()">ПОЗВАТЬ ДРУГА</button>
-        <button id="btn-action" onclick="makeCheckIn()">ОТМЕТИТЬСЯ</button>
-        <div id="timer">Ожидание подключения...</div>
+        <div class="bottom-section">
+            <button id="btn-invite" onclick="inviteFriend()">ПОЗВАТЬ ДРУГА</button>
+            <button id="btn-action" onclick="makeCheckIn()">ОТМЕТИТЬСЯ</button>
+            <div id="timer">Загрузка данных...</div>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Данные твоего Firebase (уже исправленные)
+        // Твой конфиг Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
             authDomain: "dailykgame-d75d8.firebaseapp.com",
-            databaseURL: "https://dailykgame-d75d8-default-rtdb.firebaseio.com/",
+            databaseURL: "https://dailykgame-d75d8-default-rtdb.firebaseio.com/", // ПРОВЕРЕНО
             projectId: "dailykgame-d75d8",
             appId: "1:762552994938:web:2fdfb8758aa0899e2c6eb"
         };
+        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
@@ -68,21 +88,20 @@
         let lastTime = 0;
         let petName = 'СИРИЧИК';
         
-        // Получаем ID пользователя из Телеграма
-        const myId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : "test";
+        const myId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : "dev_user";
         const startParam = tg.initDataUnsafe.start_param;
 
-        // Создаем общий ID для пары
+        // Создаем уникальный ID для пары
         let pairId = null;
         if (startParam) {
             pairId = (myId < startParam) ? `${myId}_${startParam}` : `${startParam}_${myId}`;
         }
 
+        // Если пара найдена, включаем игру
         if (pairId) {
             document.getElementById('btn-invite').style.display = 'none';
             document.getElementById('btn-action').style.display = 'block';
 
-            // Слушаем базу
             db.ref('pairs/' + pairId).on('value', (snap) => {
                 const data = snap.val() || { streak: 0, lastTime: 0, name: 'СИРИЧИК' };
                 streak = data.streak;
@@ -90,23 +109,24 @@
                 petName = data.name;
                 updateUI();
             });
+        } else {
+            document.getElementById('timer').innerText = "Ожидание подключения друга...";
         }
 
         function updateUI() {
             document.getElementById('pet-name').innerText = petName;
             document.getElementById('streak-count').innerText = streak;
             
-            // Смена картинок в зависимости от очков
             const img = document.getElementById('pet-img');
             if (streak >= 50) img.src = 'stage50.png';
             else if (streak >= 20) img.src = 'stage20.png';
             else if (streak >= 10) img.src = 'stage10.png';
             else img.src = 'stage0.png';
 
-            checkTimer();
+            checkStatus();
         }
 
-        function checkTimer() {
+        function checkStatus() {
             const now = Date.now();
             const oneDay = 24 * 60 * 60 * 1000;
             const btn = document.getElementById('btn-action');
@@ -114,19 +134,20 @@
 
             if (now - lastTime < oneDay) {
                 btn.disabled = true;
-                btn.innerText = 'УЖЕ ГОТОВО';
+                btn.innerText = 'ГОТОВО НА СЕГОДНЯ';
                 const diff = oneDay - (now - lastTime);
                 const h = Math.floor(diff / 3600000);
                 const m = Math.floor((diff % 3600000) / 60000);
                 timerEl.innerText = `Доступно через: ${h}ч ${m}м`;
             } else {
                 btn.disabled = false;
-                btn.innerText = 'ОТМЕТИТЬСЯ НА СЕГОДНЯ';
-                timerEl.innerText = 'Сиричик ждет тебя!';
+                btn.innerText = 'ОТМЕТИТЬСЯ';
+                timerEl.innerText = 'Сиричик ждет отметки!';
             }
         }
 
         function makeCheckIn() {
+            if (!pairId) return;
             db.ref('pairs/' + pairId).update({
                 streak: streak + 1,
                 lastTime: Date.now()
@@ -135,17 +156,23 @@
         }
 
         function inviteFriend() {
-            // Теперь ссылка создается с твоим реальным ID
             const link = `https://t.me/DailykDuoBot/app?startapp=${myId}`;
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Залетай растить сиричика со мной!`);
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Давай растить Сиричика вместе! Жми "Старт" по ссылке.`);
+        }
+
+        function supportMe() {
+            // Окно оплаты звезд
+            tg.openInvoice("https://t.me/stars?stars=15", (status) => {
+                if(status == 'paid') tg.showAlert("Ого! Спасибо за поддержку! ❤️");
+            });
         }
 
         function changeName() {
-            const n = prompt('Как назовем?', petName);
-            if (n && pairId) db.ref('pairs/' + pairId).update({ name: n });
+            const n = prompt('Придумай новое имя:', petName);
+            if (n && pairId) db.ref('pairs/' + pairId).update({ name: n.substring(0, 12) });
         }
 
-        setInterval(checkTimer, 60000);
+        setInterval(checkStatus, 30000);
     </script>
 </body>
 </html>
