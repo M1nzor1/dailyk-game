@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Daily Streak</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background-color: #0f0f11;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: space-between;
+            height: 100vh; overflow: hidden;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+        }
+
+        
+        .top-section { text-align: center; margin-top: 20px; width: 100%; }
+        #pet-name { 
+            font-size: 22px; font-weight: bold; color: #fff; 
+            text-decoration: underline; text-decoration-style: dashed; text-decoration-color: #555;
+            cursor: pointer; padding: 10px; display: inline-block;
+        }
+        #streak-count { font-size: 80px; font-weight: 900; color: #ff4500; margin: 0; line-height: 1; }
+        .sub-text { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+
+        
+        .img-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
+        #pet-img { 
+            width: 80vw; max-width: 350px; max-height: 40vh; object-fit: contain; 
+            transition: transform 0.3s ease; 
+        }
+
+        
+        .bottom-section { width: 90%; margin-bottom: 30px; display: flex; flex-direction: column; gap: 10px; }
+        
+        button {
+            width: 100%; height: 60px; border-radius: 16px; border: none;
+            font-size: 18px; font-weight: 800; cursor: pointer; transition: 0.2s;
+        }
+
+        #btn-invite { background-color: #34c759; color: white; }
+        #btn-action { background-color: #007aff; color: white; display: none; }
+        #btn-action:disabled { background-color: #2c2c2e; color: #636366; cursor: not-allowed; }
+
+        #timer { text-align: center; font-size: 14px; color: #888; height: 20px; margin-top: 5px; font-variant-numeric: tabular-nums; }
+    </style>
+</head>
+<body>
+
+    <div class="top-section">
+        <div id="pet-name" onclick="changeName()">ИМЯ СИРИЧИКА</div>
+        <div id="streak-count">0</div>
+        <div class="sub-text">Дней серии</div>
+    </div>
+
+    <div class="img-container">
+        <img id="pet-img" src="stage0.png" alt="Сиричик">
+    </div>
+
+    <div class="bottom-section">
+        <button id="btn-invite" onclick="inviteFriend()">ПОЗВАТЬ ДРУГА (БЕЗ НЕГО НЕ НАЧАТЬ)</button>
+        <button id="btn-action" onclick="makeCheckIn()">ОТМЕТИТЬСЯ</button>
+        <div id="timer"></div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.headerColor = '#0f0f11';
+
+        
+        let streak = parseInt(localStorage.getItem('final_v1_streak')) || 0;
+        let lastTime = parseInt(localStorage.getItem('final_v1_time')) || 0;
+        let isFriendConnected = localStorage.getItem('final_v1_friend') === 'true';
+        let petName = localStorage.getItem('final_v1_name') || 'ИМЯ СИРИЧИКА';
+
+        
+        if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+            isFriendConnected = true;
+            localStorage.setItem('final_v1_friend', 'true');
+        }
+
+        const elName = document.getElementById('pet-name');
+        const elStreak = document.getElementById('streak-count');
+        const elImg = document.getElementById('pet-img');
+        const btnInvite = document.getElementById('btn-invite');
+        const btnAction = document.getElementById('btn-action');
+        const elTimer = document.getElementById('timer');
+
+        function updateScreen() {
+            elName.innerText = petName;
+            elStreak.innerText = streak;
+
+            
+            if (streak < 10) elImg.src = 'stage0.png';
+            else if (streak < 20) elImg.src = 'stage10.png';
+            else if (streak < 50) elImg.src = 'stage20.png';
+            else elImg.src = 'stage50.png';
+
+            checkStatus();
+        }
+
+        function checkStatus() {
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+
+            if (!isFriendConnected) {
+               
+                btnInvite.style.display = 'block';
+                btnAction.style.display = 'none';
+                elTimer.innerText = 'Серия остановлена. Ждем напарника.';
+            } else {
+                
+                btnInvite.style.display = 'none';
+                btnAction.style.display = 'block';
+
+                if (now - lastTime < oneDay) {
+                    btnAction.disabled = true;
+                    btnAction.innerText = 'УЖЕ ОТМЕТИЛСЯ';
+                    startCountdown(oneDay - (now - lastTime));
+                } else {
+                    btnAction.disabled = false;
+                    btnAction.innerText = 'ОТМЕТИТЬСЯ НА СЕГОДНЯ';
+                    elTimer.innerText = 'Можно растить сиричика!';
+                }
+            }
+        }
+
+        function startCountdown(ms) {
+            const interval = setInterval(() => {
+                ms -= 1000;
+                if (ms <= 0) {
+                    clearInterval(interval);
+                    checkStatus();
+                    return;
+                }
+                const h = Math.floor(ms / 3600000);
+                const m = Math.floor((ms % 3600000) / 60000);
+                const s = Math.floor((ms % 60000) / 1000);
+                elTimer.innerText = `Следующий этап через: ${h}ч ${m}м ${s}с`;
+            }, 1000);
+        }
+
+        function makeCheckIn() {
+            streak++;
+            lastTime = Date.now();
+            localStorage.setItem('final_v1_streak', streak);
+            localStorage.setItem('final_v1_time', lastTime);
+            
+            tg.HapticFeedback.impactOccurred('heavy');
+            elImg.style.transform = 'scale(1.1)';
+            setTimeout(() => { elImg.style.transform = 'scale(1)'; }, 200);
+            
+            updateScreen();
+        }
+
+        function changeName() {
+            const newName = prompt('Как назовем сиричика?', petName);
+            if (newName && newName.trim() !== '') {
+                petName = newName.trim();
+                localStorage.setItem('final_v1_name', petName);
+                updateScreen();
+            }
+        }
+
+        function inviteFriend() {
+            
+            const botUsername = 'DailykDuoBot'; 
+            const link = `https://t.me/${botUsername}/app?startapp=ref_active`;
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Бро, залетай растить сиричика со мной! Без тебя серия не начнется.`);
+        }
+
+        updateScreen();
+    </script>
+</body>
+</html>
