@@ -7,25 +7,27 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
     <style>
-        body { background: #0f0f11; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; position: relative; }
-        .support-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(255, 215, 0, 0.2); color: #ffb900; padding: 15px 5px; border-radius: 10px; font-size: 10px; writing-mode: vertical-rl; cursor: pointer; border: 1px solid gold; }
-        #streak { font-size: 80px; font-weight: 900; color: #ff4500; margin: 0; }
-        #name { font-size: 20px; font-weight: bold; text-decoration: underline dashed; cursor: pointer; margin-bottom: 20px; }
-        button { width: 250px; height: 60px; border-radius: 15px; border: none; font-size: 18px; font-weight: bold; cursor: pointer; margin: 10px 0; }
-        .btn-main { background: #007aff; color: white; }
+        body { background: #0f0f11; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
+        .support-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(255, 215, 0, 0.15); color: #ffb900; padding: 15px 6px; border-radius: 12px; font-size: 10px; writing-mode: vertical-rl; cursor: pointer; border: 1px solid rgba(255, 215, 0, 0.3); font-weight: bold; }
+        #streak { font-size: 90px; font-weight: 900; color: #ff4500; margin: 0; }
+        #name { font-size: 22px; font-weight: bold; text-decoration: underline dashed #555; cursor: pointer; margin: 10px 0; }
+        button { width: 260px; height: 55px; border-radius: 16px; border: none; font-size: 18px; font-weight: bold; cursor: pointer; margin: 5px; }
+        #actBtn { background: #007aff; color: white; }
+        #actBtn:disabled { background: #2c2c2e; color: #666; }
         .btn-inv { background: #34c759; color: white; }
+        #status { font-size: 11px; color: #444; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="support-btn" onclick="support()">ПОДДЕРЖАТЬ ⭐ 15</div>
     <div>
         <div id="streak">0</div>
-        <div style="font-size: 12px; color: gray; margin-bottom: 10px;">ДНЕЙ СЕРИИ</div>
+        <div style="font-size: 11px; color: #666;">ДНЕЙ СЕРИИ</div>
         <div id="name" onclick="rename()">СИРИЧИК</div>
-        <img src="stage0.png" style="width: 200px; display: block; margin: 20px auto;">
-        <button class="btn-main" id="actBtn" onclick="checkIn()">ОТМЕТИТЬСЯ</button><br>
+        <img src="stage0.png" style="width: 200px; margin: 15px 0;">
+        <button id="actBtn" onclick="checkIn()">ОТМЕТИТЬСЯ</button><br>
         <button class="btn-inv" onclick="invite()">ПОЗВАТЬ ДРУГА</button>
-        <div id="status" style="font-size: 12px; color: #555; margin-top: 10px;">Проверка связи...</div>
+        <div id="status">Загрузка...</div>
     </div>
 
     <script>
@@ -42,36 +44,49 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const uid = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : "test";
-        const sp = tg.initDataUnsafe.start_param;
-        // Если зашел по ссылке — общая база, если нет — личная
-        const path = (sp && sp !== uid) ? (uid < sp ? `pairs/${uid}_${sp}` : `pairs/${sp}_${uid}`) : `pairs/solo_${uid}`;
+        const myId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : "test";
+        const friendId = tg.initDataUnsafe.start_param;
+        
+        // ЛОГИКА ПАРЫ:
+        let path;
+        if (friendId && friendId !== myId) {
+            // Если есть ID друга, создаем общий путь (меньший ID всегда первый)
+            const pairId = myId < friendId ? `${myId}_${friendId}` : `${friendId}_${myId}`;
+            path = `pairs/${pairId}`;
+            document.getElementById('status').innerText = "В паре с другом ✅";
+        } else {
+            // Если ссылки нет, это соло-режим
+            path = `solo/${myId}`;
+            document.getElementById('status').innerText = "Соло-режим (позови друга!)";
+        }
 
         db.ref(path).on('value', s => {
             const d = s.val() || { s: 0, t: 0, n: 'СИРИЧИК' };
             document.getElementById('streak').innerText = d.s;
             document.getElementById('name').innerText = d.n;
-            const canPush = Date.now() - d.t > 86400000;
-            document.getElementById('actBtn').disabled = !canPush;
-            document.getElementById('actBtn').innerText = canPush ? 'ОТМЕТИТЬСЯ' : 'ГОТОВО';
-            document.getElementById('status').innerText = "Связь установлена!";
-        }, e => {
-            document.getElementById('status').innerText = "Ошибка доступа! Проверь Rules в Firebase.";
+            const wait = Date.now() - d.t < 86400000;
+            document.getElementById('actBtn').disabled = wait;
+            document.getElementById('actBtn').innerText = wait ? 'ГОТОВО' : 'ОТМЕТИТЬСЯ';
         });
 
         function checkIn() {
-            db.ref(path).update({ s: parseInt(document.getElementById('streak').innerText) + 1, t: Date.now() });
+            const cur = parseInt(document.getElementById('streak').innerText);
+            db.ref(path).update({ s: cur + 1, t: Date.now() });
             tg.HapticFeedback.impactOccurred('heavy');
         }
+
         function invite() {
-            tg.openTelegramLink(`https://t.me/share/url?url=https://t.me/DailykDuoBot/app?startapp=${uid}&text=Давай играть!`);
+            const link = `https://t.me/DailykDuoBot/app?startapp=${myId}`;
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Давай растить Сиричика вместе!`);
         }
+
         function support() {
             tg.openInvoice("https://t.me/stars?stars=15", s => { if(s=='paid') tg.showAlert("❤️"); });
         }
+
         function rename() {
             const res = prompt("Имя?");
-            if(res) db.ref(path).update({ n: res.substring(0,10) });
+            if(res) db.ref(path).update({ n: res.substring(0,12) });
         }
     </script>
 </body>
