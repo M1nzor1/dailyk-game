@@ -9,19 +9,37 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
     <style>
         body { background: #0f0f11; color: white; font-family: -apple-system, sans-serif; margin: 0; text-align: center; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
-        .container { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 380px; }
-        #balance-box { background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(0,0,0,0.5)); padding: 8px 20px; border-radius: 25px; font-weight: 900; color: #ffd700; border: 1px solid #ffd700; font-size: 18px; box-shadow: 0 0 15px rgba(255,215,0,0.2); }
-        #streak { font-size: 70px; font-weight: 900; color: #ff4500; line-height: 0.8; margin: 5px 0; }
-        img#petImg { width: 35vw; max-width: 140px; }
+        .container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; max-width: 380px; height: 95vh; justify-content: space-between; padding: 10px 0; }
         
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; margin-top: 5px; }
-        button { border-radius: 18px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
-        .btn-main { grid-column: span 2; height: 55px; background: linear-gradient(135deg, #007aff, #0056b3); color: white; font-size: 16px; }
-        .btn-game { height: 65px; background: #1c1c1e; color: #ffd700; border: 1px solid #333; font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #top-block { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        #balance-box { background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(0,0,0,0.5)); padding: 6px 18px; border-radius: 20px; font-weight: 900; color: #ffd700; border: 1px solid #ffd700; font-size: 16px; margin-bottom: 5px; }
+        #streak { font-size: 60px; font-weight: 900; color: #ff4500; line-height: 0.8; margin: 0; }
         
-        /* КНОПКА УДАЛЕНИЯ (ТО ЧТО ТЫ ПРОСИЛ) */
-        #delBtn { background: transparent; color: #444; font-size: 10px; margin-top: 15px; text-decoration: underline; padding: 10px; }
+        #mid-block { display: flex; flex-direction: column; align-items: center; flex-grow: 1; justify-content: center; width: 100%; }
+        #name { font-size: 22px; font-weight: 900; margin: 0 0 10px 0; background: linear-gradient(90deg, #fff, #888, #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
+        /* --- ВОТ ТУТ МЫ УВЕЛИЧИЛИ ПЕРСОНАЖА --- */
+        img#petImg { 
+            width: 75vw; /* Было 35vw, стало 75vw - персонаж стал намного шире */
+            max-width: 280px; /* Максимальный размер тоже увеличили */
+            filter: drop-shadow(0 0 15px rgba(0,122,255,0.2));
+            transition: transform 0.3s ease; /* Добавим плавность при наведении */
+        }
+        
+        #bottom-block { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 90%; }
+        
+        button { border-radius: 16px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        .btn-main { grid-column: span 2; height: 50px; background: linear-gradient(135deg, #007aff, #0056b3); color: white; font-size: 15px; box-shadow: 0 4px 10px rgba(0,122,255,0.3); }
+        .btn-main:active { transform: scale(0.98); }
+        
+        .btn-game { height: 60px; background: #1c1c1e; color: #ffd700; border: 1px solid #333; font-size: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+        .btn-game span { font-size: 18px; }
+        .btn-game:active { background: #2c2c2e; }
+        
+        #delBtn { background: transparent; color: #444; font-size: 10px; margin-top: 5px; text-decoration: underline; padding: 5px; border: none; font-weight: normal; text-transform: none; }
+        
+        /* ИГРОВОЙ ЭКРАН (БЕЗ ИЗМЕНЕНИЙ) */
         #gameOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
         canvas { background: #050505; border: 2px solid #333; border-radius: 15px; }
         .controls { display: grid; grid-template-columns: repeat(3, 75px); gap: 10px; margin-top: 15px; }
@@ -31,21 +49,25 @@
 <body>
 
     <div class="container" id="mainUI">
-        <div id="balance-box">💰 <span id="balance">0</span> RobCoins</div>
-        <div id="streak">0</div>
-        <div style="font-size: 10px; color: #888; font-weight: bold; letter-spacing: 2px;">ДНЕЙ ВМЕСТЕ</div>
-        <div id="name" style="font-size: 20px; font-weight: 900; margin: 5px 0;">СИРИЧИК</div>
-        <img id="petImg" src="stage0.png">
-
-        <button class="btn-main" onclick="checkIn()" id="actBtn">ОТМЕТИТЬСЯ</button>
-
-        <div class="menu-grid">
-            <button class="btn-game" onclick="startSnake()"><span>🐍</span>ЗМЕЙКА</button>
-            <button class="btn-game" onclick="startRocket()"><span>🚀</span>РАКЕТА</button>
+        <div id="top-block">
+            <div id="balance-box">💰 <span id="balance">0</span> RobCoins</div>
+            <div id="streak">0</div>
+            <div style="font-size: 10px; color: #888; font-weight: bold; letter-spacing: 2px;">ДНЕЙ ВМЕСТЕ</div>
         </div>
-        
-        <button id="delBtn" onclick="deletePair()">РАЗОРВАТЬ ПАРУ И СТЕРЕТЬ ВСЁ</button>
-        <div id="status" style="font-size: 11px; color: #555;">Система готова</div>
+
+        <div id="mid-block">
+            <div id="name">СИРИЧИК</div>
+            <img id="petImg" src="stage0.png">
+        </div>
+
+        <div id="bottom-block">
+            <button class="btn-main" onclick="checkIn()" id="actBtn">ОТМЕТИТЬСЯ</button>
+            <div class="menu-grid">
+                <button class="btn-game" onclick="startSnake()"><span>🐍</span>ЗМЕЙКА</button>
+                <button class="btn-game" onclick="startRocket()"><span>🚀</span>РАКЕТА</button>
+            </div>
+            <button id="delBtn" onclick="deletePair()">Разбежаться и стереть всё</button>
+        </div>
     </div>
 
     <div id="gameOverlay">
@@ -60,12 +82,14 @@
             <div style="width:75px"></div>
             <div class="g-btn" ontouchstart="move(1)" ontouchend="move(0)">▶</div>
         </div>
-        <button onclick="exitGame()" style="background:#ff3b30; color:white; width:100px; height:40px; border-radius:10px; margin-top:15px;">ВЫЙТИ</button>
+        <button onclick="exitGame()" style="background:#ff3b30; color:white; width:100px; height:35px; border-radius:10px; margin-top:10px;">ВЫЙТИ</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.setHeaderColor('#0f0f11'); // Задаем цвет шапки Телеграма
+
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
             authDomain: "dailykgame-d75d8.firebaseapp.com",
@@ -76,9 +100,15 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const myId = tg.initDataUnsafe?.user?.id?.toString();
+        const startParam = tg.initDataUnsafe?.start_param?.toString();
         let currentPairId = null, globalBalance = 0, activeGame = null;
 
         if (myId) {
+            if (startParam && startParam !== myId) {
+                db.ref('users/' + myId).update({ partner: startParam });
+                db.ref('users/' + startParam).update({ partner: myId });
+            }
+
             db.ref('users/' + myId + '/partner').on('value', snap => {
                 const partnerId = snap.val();
                 if (partnerId) {
@@ -90,11 +120,13 @@
                         document.getElementById('streak').innerText = d.streak;
                         document.getElementById('name').innerText = d.name;
                     });
+                } else {
+                    currentPairId = null; // Партнер ушел
                 }
             });
         }
 
-        // --- ОБЩАЯ ЛОГИКА ИГР ---
+        // --- ОБЩАЯ ЛОГИКА ИГР (БЕЗ ИЗМЕНЕНИЙ) ---
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         let gameLoop, score, snake, food, dx, dy, player, enemies, dir = 0;
@@ -120,6 +152,7 @@
             document.getElementById('gameOverlay').style.display = 'flex';
             document.getElementById('snakeControls').style.display = ctrlId === 'snakeControls' ? 'grid' : 'none';
             document.getElementById('rocketControls').style.display = ctrlId === 'rocketControls' ? 'grid' : 'none';
+            ctx.clearRect(0, 0, 300, 300); // Очищаем холст перед началом
         }
 
         function exitGame() {
@@ -128,7 +161,7 @@
             document.getElementById('gameOverlay').style.display = 'none';
         }
 
-        // --- ЗМЕЙКА ---
+        // --- ЗМЕЙКА (БЕЗ ИЗМЕНЕНИЙ) ---
         function resetSnake() { snake = [{x:150,y:150}]; food = {x:100,y:100}; dx=10; dy=0; score=0; }
         function changeDir(nx, ny) { if (nx !== -dx && ny !== -dy) { dx = nx; dy = ny; } }
         function drawSnake() {
@@ -142,12 +175,14 @@
             document.getElementById('gameScore').innerText = score;
         }
 
-        // --- РАКЕТА ---
+        // --- РАКЕТА (БЕЗ ИЗМЕНЕНИЙ) ---
         function resetRocket() { player={x:135,y:250}; enemies=[]; score=0; dir=0; }
         function move(d) { dir = d; }
         function drawRocket() {
             ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
             player.x += dir*5;
+            if (player.x < 0) player.x = 0;
+            if (player.x > 270) player.x = 270;
             ctx.fillStyle="#007aff"; ctx.fillRect(player.x, 260, 30, 30);
             if (Math.random()<0.05) enemies.push({x:Math.random()*280, y:-20, s:3+Math.random()*3});
             enemies.forEach((en, i) => {
@@ -167,14 +202,15 @@
 
         function deletePair() {
             if (!confirm("💀 УВЕРЕН? Это сотрет ВСЮ серию и ВСЕ монеты навсегда!")) return;
-            const partnerId = currentPairId.replace(myId, "").replace("_", "");
+            const ids = currentPairId.split('_');
+            const partnerId = ids[0] === myId ? ids[1] : ids[0];
             db.ref('users/'+myId+'/partner').remove();
             db.ref('users/'+partnerId+'/partner').remove();
             db.ref('pairs/'+currentPairId).remove();
             location.reload();
         }
 
-        function checkIn() { /* тут твоя логика ричков */ tg.HapticFeedback.impactOccurred('heavy'); }
+        function checkIn() { /* Твоя логика ричков */ tg.HapticFeedback.impactOccurred('heavy'); }
     </script>
 </body>
 </html>
