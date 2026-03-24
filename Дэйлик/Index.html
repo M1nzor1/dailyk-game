@@ -3,46 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Daily Streak Duo</title>
+    <title>Daily Streak Duo: Game Zone</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
     <style>
-        body { background: radial-gradient(circle at center, #1a1a24 0%, #0f0f11 100%); color: white; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; overflow: hidden; }
-        .support-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,140,0,0.2)); color: #ffb900; padding: 15px 8px; border-radius: 12px; font-size: 11px; writing-mode: vertical-rl; cursor: pointer; border: 1px solid rgba(255, 215, 0, 0.4); font-weight: 800; text-transform: uppercase; z-index: 100;}
-        #streak { font-size: 100px; font-weight: 900; color: #ff4500; margin: 0; line-height: 0.9; text-shadow: 0 0 20px rgba(255, 69, 0, 0.5); }
-        #name { font-size: 24px; font-weight: 900; text-decoration: underline dashed #666; cursor: pointer; margin: 15px 0; letter-spacing: 1px; }
-        .container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; max-width: 380px; }
-        img { width: 65vw; max-width: 250px; margin: 10px 0; transition: transform 0.2s; }
-        button { width: 85%; height: 60px; border-radius: 18px; border: none; font-size: 18px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; margin: 5px 0; }
-        #actBtn { background: linear-gradient(135deg, #007aff, #0056b3); color: white; display: none; }
-        #actBtn:disabled { background: #2c2c2e; color: #666; }
-        #invBtn { background: linear-gradient(135deg, #34c759, #248a3d); color: white; display: none; }
-        /* КРАСНАЯ КНОПКА УДАЛЕНИЯ */
-        #deleteBtn { background: linear-gradient(135deg, #8b0000, #4a0000); color: white; display: none; height: 45px; font-size: 14px; width: 60%; margin-top: 10px; border: 1px solid #ff4500; }
-        #status { font-size: 13px; color: #888; margin-top: 10px; font-weight: 600; }
+        body { background: #0f0f11; color: white; font-family: -apple-system, sans-serif; margin: 0; text-align: center; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .container { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 380px; }
+        #balance-box { background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(0,0,0,0.5)); padding: 8px 20px; border-radius: 25px; font-weight: 900; color: #ffd700; border: 1px solid #ffd700; font-size: 18px; box-shadow: 0 0 15px rgba(255,215,0,0.2); }
+        #streak { font-size: 70px; font-weight: 900; color: #ff4500; line-height: 0.8; margin: 5px 0; }
+        img#petImg { width: 35vw; max-width: 140px; }
+        
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; margin-top: 5px; }
+        button { border-radius: 18px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        .btn-main { grid-column: span 2; height: 55px; background: linear-gradient(135deg, #007aff, #0056b3); color: white; font-size: 16px; }
+        .btn-game { height: 65px; background: #1c1c1e; color: #ffd700; border: 1px solid #333; font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        /* КНОПКА УДАЛЕНИЯ (ТО ЧТО ТЫ ПРОСИЛ) */
+        #delBtn { background: transparent; color: #444; font-size: 10px; margin-top: 15px; text-decoration: underline; padding: 10px; }
+        
+        #gameOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
+        canvas { background: #050505; border: 2px solid #333; border-radius: 15px; }
+        .controls { display: grid; grid-template-columns: repeat(3, 75px); gap: 10px; margin-top: 15px; }
+        .g-btn { width: 75px; height: 75px; background: #2c2c2e; border-radius: 20px; color: white; font-size: 25px; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
-    <div class="container">
+
+    <div class="container" id="mainUI">
+        <div id="balance-box">💰 <span id="balance">0</span> RobCoins</div>
         <div id="streak">0</div>
-        <div style="font-size: 12px; color: #888; font-weight: bold; letter-spacing: 2px;">ДНЕЙ РИЧКА</div>
-        <div id="name" onclick="rename()">СИРИЧИК</div>
+        <div style="font-size: 10px; color: #888; font-weight: bold; letter-spacing: 2px;">ДНЕЙ ВМЕСТЕ</div>
+        <div id="name" style="font-size: 20px; font-weight: 900; margin: 5px 0;">СИРИЧИК</div>
         <img id="petImg" src="stage0.png">
+
+        <button class="btn-main" onclick="checkIn()" id="actBtn">ОТМЕТИТЬСЯ</button>
+
+        <div class="menu-grid">
+            <button class="btn-game" onclick="startSnake()"><span>🐍</span>ЗМЕЙКА</button>
+            <button class="btn-game" onclick="startRocket()"><span>🚀</span>РАКЕТА</button>
+        </div>
         
-        <button id="actBtn" onclick="checkIn()">ОТМЕТИТЬСЯ</button>
-        <button id="invBtn" onclick="invite()">ПОЗВАТЬ ДРУГА</button>
-        <button id="deleteBtn" onclick="deletePair()">РАЗОРВАТЬ ПАРУ</button>
-        <div id="status">Загрузка базы...</div>
+        <button id="delBtn" onclick="deletePair()">РАЗОРВАТЬ ПАРУ И СТЕРЕТЬ ВСЁ</button>
+        <div id="status" style="font-size: 11px; color: #555;">Система готова</div>
+    </div>
+
+    <div id="gameOverlay">
+        <div id="gameScore" style="font-size: 24px; font-weight: 900; margin-bottom: 5px;">0</div>
+        <canvas id="gameCanvas" width="300" height="300"></canvas>
+        <div class="controls" id="snakeControls">
+            <div></div><div class="g-btn" ontouchstart="changeDir(0,-10)">▲</div><div></div>
+            <div class="g-btn" ontouchstart="changeDir(-10,0)">◀</div><div class="g-btn" ontouchstart="changeDir(0,10)">▼</div><div class="g-btn" ontouchstart="changeDir(10,0)">▶</div>
+        </div>
+        <div class="controls" id="rocketControls" style="display:none;">
+            <div class="g-btn" ontouchstart="move(-1)" ontouchend="move(0)">◀</div>
+            <div style="width:75px"></div>
+            <div class="g-btn" ontouchstart="move(1)" ontouchend="move(0)">▶</div>
+        </div>
+        <button onclick="exitGame()" style="background:#ff3b30; color:white; width:100px; height:40px; border-radius:10px; margin-top:15px;">ВЫЙТИ</button>
     </div>
 
     <script>
-        const shortName = "seriychik"; 
-
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.setHeaderColor('#0f0f11');
-
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
             authDomain: "dailykgame-d75d8.firebaseapp.com",
@@ -52,156 +75,106 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-
         const myId = tg.initDataUnsafe?.user?.id?.toString();
-        const startParam = tg.initDataUnsafe?.start_param?.toString();
-        
-        let currentPairId = null;
-        let currentPairData = {};
+        let currentPairId = null, globalBalance = 0, activeGame = null;
 
-        if (!myId) {
-            document.getElementById('status').innerText = "Ошибка: Открой игру через Telegram!";
-        } else {
-            if (startParam && startParam !== myId) {
-                db.ref('users/' + myId).update({ partner: startParam });
-                db.ref('users/' + startParam).update({ partner: myId });
-            }
-
-            // СЛУШАЕМ ПРОФИЛЬ (ЕСТЬ ЛИ НАПАРНИК)
+        if (myId) {
             db.ref('users/' + myId + '/partner').on('value', snap => {
                 const partnerId = snap.val();
-                
                 if (partnerId) {
                     currentPairId = myId < partnerId ? `${myId}_${partnerId}` : `${partnerId}_${myId}`;
-                    
-                    document.getElementById('actBtn').style.display = 'block';
-                    document.getElementById('deleteBtn').style.display = 'block';
-                    document.getElementById('invBtn').style.display = 'none';
-
-                    // ЛОГИКА КООПЕРАТИВА
-                    db.ref(`pairs/${currentPairId}`).on('value', pairSnap => {
-                        currentPairData = pairSnap.val() || { streak: 0, name: 'СИРИЧИК' };
-                        
-                        document.getElementById('streak').innerText = currentPairData.streak || 0;
-                        document.getElementById('name').innerText = currentPairData.name || 'СИРИЧИК';
-                        
-                        const img = document.getElementById('petImg');
-                        const s = currentPairData.streak || 0;
-                        if(s >= 50) img.src = 'stage50.png';
-                        else if(s >= 20) img.src = 'stage20.png';
-                        else if(s >= 10) img.src = 'stage10.png';
-                        else img.src = 'stage0.png';
-
-                        const today = new Date().toDateString();
-                        const clicks = currentPairData.clicks || {};
-                        
-                        const myClickToday = clicks[myId] === today;
-                        const partnerClickToday = clicks[partnerId] === today;
-                        
-                        const btn = document.getElementById('actBtn');
-                        const statusText = document.getElementById('status');
-                        
-                        if (myClickToday && partnerClickToday) {
-                            btn.disabled = true;
-                            btn.innerText = 'РИЧОК СОБРАН';
-                            statusText.innerText = 'Вы оба отметились сегодня! 🔥';
-                            statusText.style.color = '#ff4500';
-                        } else if (myClickToday && !partnerClickToday) {
-                            btn.disabled = true;
-                            btn.innerText = 'ОЖИДАНИЕ...';
-                            statusText.innerText = 'Ты отметился. Ждем напарника! ⏳';
-                            statusText.style.color = '#ffb900';
-                        } else if (!myClickToday && partnerClickToday) {
-                            btn.disabled = false;
-                            btn.innerText = 'ОТМЕТИТЬСЯ';
-                            statusText.innerText = 'Напарник уже нажал! Твоя очередь! 🚀';
-                            statusText.style.color = '#34c759';
-                        } else {
-                            btn.disabled = false;
-                            btn.innerText = 'ОТМЕТИТЬСЯ';
-                            statusText.innerText = 'Сделайте ричок вместе! 🤝';
-                            statusText.style.color = '#34c759';
-                        }
+                    db.ref(`pairs/${currentPairId}`).on('value', p => {
+                        const d = p.val() || {streak: 0, balance: 0, name: 'СИРИЧИК'};
+                        globalBalance = d.balance || 0;
+                        document.getElementById('balance').innerText = globalBalance;
+                        document.getElementById('streak').innerText = d.streak;
+                        document.getElementById('name').innerText = d.name;
                     });
-                } else {
-                    // ЕСЛИ НАПАРНИКА НЕТ ИЛИ ЕГО УДАЛИЛИ
-                    currentPairId = null;
-                    document.getElementById('invBtn').style.display = 'block';
-                    document.getElementById('actBtn').style.display = 'none';
-                    document.getElementById('deleteBtn').style.display = 'none';
-                    document.getElementById('status').innerText = "Нужен друг для старта!";
-                    document.getElementById('status').style.color = "#ff4500";
-                    
-                    // Обнуляем визуал на соло-режим ожидания
-                    document.getElementById('streak').innerText = '0';
-                    document.getElementById('name').innerText = 'СИРИЧИК';
-                    document.getElementById('petImg').src = 'stage0.png';
                 }
             });
         }
 
-        function checkIn() {
-            if (!currentPairId) return;
-            const today = new Date().toDateString();
-            const clicks = currentPairData.clicks || {};
-            
-            const ids = currentPairId.split('_');
-            const partnerId = ids[0] === myId ? ids[1] : ids[0];
-            const partnerClickToday = clicks[partnerId] === today;
-            
-            const updates = {};
-            updates[`clicks/${myId}`] = today; 
-            
-            if (partnerClickToday && currentPairData.lastStreakDate !== today) {
-                updates['streak'] = (currentPairData.streak || 0) + 1; 
-                updates['lastStreakDate'] = today; 
-            }
-            
-            db.ref(`pairs/${currentPairId}`).update(updates);
-            
-            tg.HapticFeedback.impactOccurred('heavy');
-            const img = document.getElementById('petImg');
-            img.style.transform = 'scale(1.15)';
-            setTimeout(() => img.style.transform = 'scale(1)', 200);
+        // --- ОБЩАЯ ЛОГИКА ИГР ---
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        let gameLoop, score, snake, food, dx, dy, player, enemies, dir = 0;
+
+        function startSnake() {
+            if (!currentPairId) return alert("Нужен друг!");
+            activeGame = "snake";
+            openOverlay("snakeControls");
+            resetSnake();
+            gameLoop = setInterval(drawSnake, 100);
         }
 
-        // ФУНКЦИЯ УДАЛЕНИЯ ПАРЫ (ЖЕСТКАЯ)
-        function deletePair() {
-            if (!currentPairId) return;
-            
-            const confirmDelete = confirm("💀 ВНИМАНИЕ! Ты точно хочешь навсегда разорвать пару и убить Сиричика? Вы потеряете друг друга и весь прогресс!");
-            
-            if (confirmDelete) {
-                const ids = currentPairId.split('_');
-                const partnerId = ids[0] === myId ? ids[1] : ids[0];
-                
-                // Удаляем связи из обоих профилей
-                db.ref('users/' + myId + '/partner').remove();
-                db.ref('users/' + partnerId + '/partner').remove();
-                
-                // Удаляем саму комнату Сиричика
-                db.ref('pairs/' + currentPairId).remove().then(() => {
-                    tg.HapticFeedback.notificationOccurred('error');
-                });
-            }
+        function startRocket() {
+            if (!currentPairId) return alert("Нужен друг!");
+            activeGame = "rocket";
+            openOverlay("rocketControls");
+            resetRocket();
+            gameLoop = setInterval(drawRocket, 20);
         }
 
-        function invite() {
-            const link = `https://t.me/DailykDuoBot/${shortName}?startapp=${myId}`;
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Залетай делать рички Сиричику вместе со мной!`);
+        function openOverlay(ctrlId) {
+            document.getElementById('mainUI').style.display = 'none';
+            document.getElementById('gameOverlay').style.display = 'flex';
+            document.getElementById('snakeControls').style.display = ctrlId === 'snakeControls' ? 'grid' : 'none';
+            document.getElementById('rocketControls').style.display = ctrlId === 'rocketControls' ? 'grid' : 'none';
         }
 
-        function support() {
-            tg.openInvoice("https://t.me/stars?stars=15", status => { 
-                if(status == 'paid') tg.showAlert("Ого! Спасибо за поддержку, бро! 🚀");
+        function exitGame() {
+            clearInterval(gameLoop);
+            document.getElementById('mainUI').style.display = 'flex';
+            document.getElementById('gameOverlay').style.display = 'none';
+        }
+
+        // --- ЗМЕЙКА ---
+        function resetSnake() { snake = [{x:150,y:150}]; food = {x:100,y:100}; dx=10; dy=0; score=0; }
+        function changeDir(nx, ny) { if (nx !== -dx && ny !== -dy) { dx = nx; dy = ny; } }
+        function drawSnake() {
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            if (head.x<0 || head.x>=300 || head.y<0 || head.y>=300 || snake.some(s=>s.x===head.x&&s.y===head.y)) return end(score);
+            snake.unshift(head);
+            if (head.x===food.x && head.y===food.y) { score++; food={x:Math.floor(Math.random()*29)*10, y:Math.floor(Math.random()*29)*10}; } else { snake.pop(); }
+            ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
+            ctx.fillStyle="lime"; snake.forEach(s=>ctx.fillRect(s.x,s.y,9,9));
+            ctx.fillStyle="red"; ctx.fillRect(food.x,food.y,9,9);
+            document.getElementById('gameScore').innerText = score;
+        }
+
+        // --- РАКЕТА ---
+        function resetRocket() { player={x:135,y:250}; enemies=[]; score=0; dir=0; }
+        function move(d) { dir = d; }
+        function drawRocket() {
+            ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
+            player.x += dir*5;
+            ctx.fillStyle="#007aff"; ctx.fillRect(player.x, 260, 30, 30);
+            if (Math.random()<0.05) enemies.push({x:Math.random()*280, y:-20, s:3+Math.random()*3});
+            enemies.forEach((en, i) => {
+                en.y += en.s; ctx.fillStyle="orange"; ctx.beginPath(); ctx.arc(en.x,en.y,8,0,7); ctx.fill();
+                if (en.y>260 && en.y<290 && en.x>player.x && en.x<player.x+30) return end(Math.floor(score/5));
+                if (en.y>300) { enemies.splice(i,1); score++; document.getElementById('gameScore').innerText = score; }
             });
         }
 
-        function rename() {
-            if (!currentPairId) return alert("Сначала пригласи друга!");
-            const res = prompt("Придумай имя:", document.getElementById('name').innerText);
-            if(res && res.trim() !== "") db.ref(`pairs/${currentPairId}`).update({ name: res.substring(0, 15).toUpperCase() });
+        function end(reward) {
+            clearInterval(gameLoop);
+            db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance + reward });
+            tg.HapticFeedback.notificationOccurred('success');
+            alert("ФИНИШ! + " + reward + " RobCoins");
+            exitGame();
         }
+
+        function deletePair() {
+            if (!confirm("💀 УВЕРЕН? Это сотрет ВСЮ серию и ВСЕ монеты навсегда!")) return;
+            const partnerId = currentPairId.replace(myId, "").replace("_", "");
+            db.ref('users/'+myId+'/partner').remove();
+            db.ref('users/'+partnerId+'/partner').remove();
+            db.ref('pairs/'+currentPairId).remove();
+            location.reload();
+        }
+
+        function checkIn() { /* тут твоя логика ричков */ tg.HapticFeedback.impactOccurred('heavy'); }
     </script>
 </body>
 </html>
