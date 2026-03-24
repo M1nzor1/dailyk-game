@@ -9,18 +9,25 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
     <style>
         body { background: radial-gradient(circle at center, #1a1a24 0%, #0f0f11 100%); color: white; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; overflow: hidden; }
-        .container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; max-width: 380px; transition: 0.3s; }
+        .container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; max-width: 380px; }
         #streak { font-size: 80px; font-weight: 900; color: #ff4500; margin: 0; line-height: 0.9; }
-        #balance-box { background: rgba(255, 255, 255, 0.1); padding: 5px 15px; border-radius: 20px; font-weight: bold; color: #ffd700; margin-bottom: 10px; border: 1px solid #ffd700; }
-        img { width: 50vw; max-width: 200px; margin: 10px 0; }
+        #balance-box { background: rgba(255, 215, 0, 0.1); padding: 5px 15px; border-radius: 20px; font-weight: bold; color: #ffd700; margin-bottom: 10px; border: 1px solid #ffd700; }
+        img { width: 45vw; max-width: 180px; margin: 10px 0; }
         button { width: 85%; height: 50px; border-radius: 15px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; margin: 5px 0; }
-        #actBtn { background: linear-gradient(135deg, #007aff, #0056b3); color: white; }
         #snakeBtn { background: linear-gradient(135deg, #ffd700, #b8860b); color: #000; }
-        #invBtn { background: linear-gradient(135deg, #34c759, #248a3d); color: white; }
+        #actBtn { background: linear-gradient(135deg, #007aff, #0056b3); color: white; }
+
+        /* ИГРОВОЙ ЭКРАН */
+        #gameArea { display: none; flex-direction: column; align-items: center; gap: 10px; }
+        #gameCanvas { background: #000; border: 3px solid #333; border-radius: 10px; }
         
-        /* ЭКРАН ЗМЕЙКИ */
-        #gameCanvas { background: #000; display: none; border: 2px solid #333; margin-top: 10px; }
-        #closeGame { display: none; background: #ff3b30; width: 50%; height: 40px; }
+        /* ПУЛЬТ УПРАВЛЕНИЯ */
+        .controls { display: grid; grid-template-columns: repeat(3, 70px); grid-template-rows: repeat(2, 70px); gap: 10px; margin-top: 15px; }
+        .btn-dir { width: 70px; height: 70px; background: #333; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; user-select: none; -webkit-tap-highlight-color: transparent; }
+        .up { grid-column: 2; }
+        .left { grid-column: 1; grid-row: 2; }
+        .down { grid-column: 2; grid-row: 2; }
+        .right { grid-column: 3; grid-row: 2; }
     </style>
 </head>
 <body>
@@ -30,21 +37,29 @@
         <div style="font-size: 10px; color: #888; font-weight: bold; letter-spacing: 2px;">ДНЕЙ РИЧКА</div>
         <div id="name" style="font-size: 20px; font-weight: bold; margin: 10px 0;">СИРИЧИК</div>
         <img id="petImg" src="stage0.png">
-        
         <button id="actBtn" onclick="checkIn()">ОТМЕТИТЬСЯ</button>
         <button id="snakeBtn" onclick="startSnake()">ИГРАТЬ В ЗМЕЙКУ 🐍</button>
-        <button id="invBtn" onclick="invite()" style="display:none;">ПОЗВАТЬ ДРУГА</button>
         <div id="status" style="font-size: 12px; color: #888;">Загрузка...</div>
     </div>
 
-    <canvas id="gameCanvas" width="300" height="300"></canvas>
-    <button id="closeGame" onclick="stopSnake()">ВЫЙТИ</button>
+    <div id="gameArea">
+        <div id="scoreLabel" style="font-size: 20px; font-weight: bold;">Счет: 0</div>
+        <canvas id="gameCanvas" width="300" height="300"></canvas>
+        <div class="controls">
+            <div class="btn-dir up" ontouchstart="changeDir(0,-10)">▲</div>
+            <div class="btn-dir left" ontouchstart="changeDir(-10,0)">◀</div>
+            <div class="btn-dir down" ontouchstart="changeDir(0,10)">▼</div>
+            <div class="btn-dir right" ontouchstart="changeDir(10,0)">▶</div>
+        </div>
+        <button onclick="stopSnake()" style="background: #ff3b30; color: white; width: 100px; height: 40px; margin-top: 10px;">ВЫЙТИ</button>
+    </div>
 
     <script>
         const shortName = "seriychik"; 
         const tg = window.Telegram.WebApp;
         tg.expand();
 
+        // Твой Firebase конфиг
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
             authDomain: "dailykgame-d75d8.firebaseapp.com",
@@ -55,36 +70,13 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const myId = tg.initDataUnsafe?.user?.id?.toString();
-        const startParam = tg.initDataUnsafe?.start_param?.toString();
-        let currentPairId = null;
         let myBalance = 0;
 
+        // Загрузка баланса
         if (myId) {
-            if (startParam && startParam !== myId) {
-                db.ref('users/' + myId).update({ partner: startParam });
-                db.ref('users/' + startParam).update({ partner: myId });
-            }
-
-            // Следим за балансом
             db.ref('users/' + myId + '/balance').on('value', s => {
                 myBalance = s.val() || 0;
                 document.getElementById('balance').innerText = myBalance;
-            });
-
-            // Следим за парой
-            db.ref('users/' + myId + '/partner').on('value', snap => {
-                const partnerId = snap.val();
-                if (partnerId) {
-                    currentPairId = myId < partnerId ? `${myId}_${partnerId}` : `${partnerId}_${myId}`;
-                    document.getElementById('invBtn').style.display = 'none';
-                    db.ref(`pairs/${currentPairId}`).on('value', p => {
-                        const d = p.val() || {streak:0, name:'СИРИЧИК'};
-                        document.getElementById('streak').innerText = d.streak;
-                        document.getElementById('name').innerText = d.name;
-                    });
-                } else {
-                    document.getElementById('invBtn').style.display = 'block';
-                }
             });
         }
 
@@ -95,8 +87,7 @@
 
         function startSnake() {
             document.getElementById('mainUI').style.display = 'none';
-            canvas.style.display = 'block';
-            document.getElementById('closeGame').style.display = 'block';
+            document.getElementById('gameArea').style.display = 'flex';
             resetGame();
             gameInterval = setInterval(drawGame, 100);
         }
@@ -104,59 +95,54 @@
         function stopSnake() {
             clearInterval(gameInterval);
             document.getElementById('mainUI').style.display = 'flex';
-            canvas.style.display = 'none';
-            document.getElementById('closeGame').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'none';
         }
 
         function resetGame() {
-            snake = [{x: 150, y: 150}];
+            snake = [{x: 150, y: 150}, {x: 140, y: 150}, {x: 130, y: 150}];
             food = {x: 100, y: 100};
             dx = 10; dy = 0; score = 0;
+            document.getElementById('scoreLabel').innerText = "Счет: 0";
+        }
+
+        function changeDir(nx, ny) {
+            if (nx !== -dx && ny !== -dy) { dx = nx; dy = ny; tg.HapticFeedback.impactOccurred('light'); }
         }
 
         function drawGame() {
             const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            
+            // Проигрыш
             if (head.x < 0 || head.x >= 300 || head.y < 0 || head.y >= 300 || snake.some(s => s.x === head.x && s.y === head.y)) {
-                alert("Игра окончена! Вы заработали " + score + " RobCoins");
+                tg.HapticFeedback.notificationOccurred('error');
                 db.ref('users/' + myId).update({ balance: myBalance + score });
+                alert("ТЫ ПРОИГРАЛ! Заработано: " + score + " RobCoins");
                 stopSnake();
                 return;
             }
+
             snake.unshift(head);
             if (head.x === food.x && head.y === food.y) {
                 score++;
+                document.getElementById('scoreLabel').innerText = "Счет: " + score;
                 food = {x: Math.floor(Math.random()*29)*10, y: Math.floor(Math.random()*29)*10};
+                tg.HapticFeedback.impactOccurred('medium');
             } else { snake.pop(); }
 
             ctx.fillStyle = "black"; ctx.fillRect(0,0,300,300);
-            ctx.fillStyle = "lime"; snake.forEach(s => ctx.fillRect(s.x, s.y, 9, 9));
+            ctx.fillStyle = "#00ff00"; snake.forEach(s => ctx.fillRect(s.x, s.y, 9, 9));
             ctx.fillStyle = "red"; ctx.fillRect(food.x, food.y, 9, 9);
         }
 
+        // Управление клавиатурой (стрелки)
         window.addEventListener("keydown", e => {
-            if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -10; }
-            if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = 10; }
-            if (e.key === "ArrowLeft" && dx === 0) { dx = -10; dy = 0; }
-            if (e.key === "ArrowRight" && dx === 0) { dx = 10; dy = 0; }
+            if (e.key === "ArrowUp") changeDir(0,-10);
+            if (e.key === "ArrowDown") changeDir(0,10);
+            if (e.key === "ArrowLeft") changeDir(-10,0);
+            if (e.key === "ArrowRight") changeDir(10,0);
         });
 
-        // Тач-управление для телефона
-        canvas.addEventListener('touchstart', e => {
-            const touch = e.touches[0];
-            const x = touch.clientX - canvas.offsetLeft;
-            const y = touch.clientY - canvas.offsetTop;
-            if (Math.abs(x - 150) > Math.abs(y - 150)) {
-                dx = x > 150 ? 10 : -10; dy = 0;
-            } else {
-                dy = y > 150 ? 10 : -10; dx = 0;
-            }
-        });
-
-        function checkIn() { /* твоя логика ричков из прошлого кода */ }
-        function invite() {
-            const link = `https://t.me/DailykDuoBot/${shortName}?startapp=${myId}`;
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Залетай делать рички Сиричику и играть в змейку!`);
-        }
+        function checkIn() { /* тут твоя логика ричков */ }
     </script>
 </body>
 </html>
