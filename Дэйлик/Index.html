@@ -18,6 +18,8 @@
         #actBtn { background: linear-gradient(135deg, #007aff, #0056b3); color: white; display: none; }
         #actBtn:disabled { background: #2c2c2e; color: #666; }
         #invBtn { background: linear-gradient(135deg, #34c759, #248a3d); color: white; display: none; }
+        /* КНОПКА СБРОСА */
+        #resetBtn { background: linear-gradient(135deg, #ff3b30, #b92b27); color: white; display: none; height: 45px; font-size: 14px; width: 60%; margin-top: 10px; }
         #status { font-size: 13px; color: #888; margin-top: 10px; font-weight: 600; }
     </style>
 </head>
@@ -31,22 +33,17 @@
         
         <button id="actBtn" onclick="checkIn()">ОТМЕТИТЬСЯ</button>
         <button id="invBtn" onclick="invite()">ПОЗВАТЬ ДРУГА</button>
+        <button id="resetBtn" onclick="resetStreak()">СБРОСИТЬ ПРОГРЕСС</button>
         <div id="status">Загрузка базы...</div>
     </div>
 
     <script>
-        // ----------------------------------------------------
-        // НАСТРОЙКА ССЫЛКИ (ВАЖНО!)
-        // Если в BotFather твой Web App называется "app", оставь так. 
-        // Если "game" или "siri", впиши это слово вместо "app".
         const shortName = "seriychik"; 
-        // ----------------------------------------------------
 
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.setHeaderColor('#0f0f11');
 
-        // Твоя европейская база (работает четко)
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
             authDomain: "dailykgame-d75d8.firebaseapp.com",
@@ -57,7 +54,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Получаем ID игроков
         const myId = tg.initDataUnsafe?.user?.id?.toString();
         const startParam = tg.initDataUnsafe?.start_param?.toString();
         
@@ -77,16 +73,15 @@
                 const partnerId = snap.val();
                 
                 if (partnerId) {
-                    // НАПАРНИК НАЙДЕН! ЗАПУСКАЕМ ИГРУ
                     currentPairId = myId < partnerId ? `${myId}_${partnerId}` : `${partnerId}_${myId}`;
                     
                     document.getElementById('actBtn').style.display = 'block';
+                    document.getElementById('resetBtn').style.display = 'block'; // Показываем кнопку сброса
                     document.getElementById('invBtn').style.display = 'none';
-                    document.getElementById('status').style.color = "#34c759";
 
-                    // ЗАГРУЖАЕМ СИРИЧИКА ДЛЯ ПАРЫ
+                    // ЗАГРУЖАЕМ СИРИЧИКА
                     db.ref(`pairs/${currentPairId}`).on('value', pairSnap => {
-                        const data = pairSnap.val() || { streak: 0, lastTime: 0, name: 'СИРИЧИК' };
+                        const data = pairSnap.val() || { streak: 0, name: 'СИРИЧИК' };
                         
                         document.getElementById('streak').innerText = data.streak;
                         document.getElementById('name').innerText = data.name;
@@ -97,59 +92,80 @@
                         else if(data.streak >= 10) img.src = 'stage10.png';
                         else img.src = 'stage0.png';
 
-                        const timePassed = Date.now() - data.lastTime;
+                        const myLastTime = data[`lastTime_${myId}`] || 0;
+                        const timePassed = Date.now() - myLastTime;
                         const btn = document.getElementById('actBtn');
                         
-                        if (timePassed < 86400000) {
+                        if (timePassed < 86400000 && data.streak > 0) {
                             btn.disabled = true;
-                            btn.innerText = 'РИЧОК СОБРАН';
+                            btn.innerText = 'ТЫ УЖЕ ОТМЕТИЛСЯ';
                             const timeLeft = 86400000 - timePassed;
                             const h = Math.floor(timeLeft / (1000 * 60 * 60));
                             const m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                            document.getElementById('status').innerText = `Следующая отметка через: ${h}ч ${m}м`;
+                            document.getElementById('status').innerText = `Твоя следующая отметка через: ${h}ч ${m}м`;
                             document.getElementById('status').style.color = "#ff4500";
                         } else {
                             btn.disabled = false;
                             btn.innerText = 'ОТМЕТИТЬСЯ';
-                            document.getElementById('status').innerText = "Напарник в сети. Жми кнопку!";
+                            document.getElementById('status').innerText = "Твоя очередь! Жми кнопку 🔥";
                             document.getElementById('status').style.color = "#34c759";
                         }
                     });
                 } else {
-                    // НАПАРНИКА НЕТ - ПОКАЗЫВАЕМ КНОПКУ ПРИГЛАШЕНИЯ
                     document.getElementById('invBtn').style.display = 'block';
                     document.getElementById('actBtn').style.display = 'none';
+                    document.getElementById('resetBtn').style.display = 'none';
                     document.getElementById('status').innerText = "Нужен друг для старта!";
                     document.getElementById('status').style.color = "#ff4500";
                 }
             });
         }
 
-        // КНОПКА ОТМЕТКИ
+        // ОТМЕТКА
         function checkIn() {
             if (!currentPairId) return;
             const cur = parseInt(document.getElementById('streak').innerText);
-            db.ref(`pairs/${currentPairId}`).update({ streak: cur + 1, lastTime: Date.now() });
+            
+            db.ref(`pairs/${currentPairId}`).update({ 
+                streak: cur + 1, 
+                [`lastTime_${myId}`]: Date.now() 
+            });
+            
             tg.HapticFeedback.impactOccurred('heavy');
             const img = document.getElementById('petImg');
             img.style.transform = 'scale(1.15)';
             setTimeout(() => img.style.transform = 'scale(1)', 200);
         }
 
-        // КНОПКА ПРИГЛАШЕНИЯ (ГЕНЕРАЦИЯ ПРАВИЛЬНОЙ ССЫЛКИ)
+        // ФУНКЦИЯ СБРОСА РИЧКОВ
+        function resetStreak() {
+            if (!currentPairId) return;
+            
+            // Спрашиваем подтверждение
+            const confirmReset = confirm("Ты точно хочешь убить Сиричика и сбросить рички до 0? Это действие нельзя отменить!");
+            
+            if (confirmReset) {
+                const currentName = document.getElementById('name').innerText;
+                // .set полностью перезаписывает базу пары, удаляя таймеры (вы сможете сразу начать заново)
+                db.ref(`pairs/${currentPairId}`).set({ 
+                    streak: 0, 
+                    name: currentName 
+                });
+                tg.HapticFeedback.notificationOccurred('warning');
+            }
+        }
+
         function invite() {
             const link = `https://t.me/DailykDuoBot/${shortName}?startapp=${myId}`;
             tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Залетай делать рички Сиричику вместе со мной!`);
         }
 
-        // КНОПКА ПОДДЕРЖКИ
         function support() {
             tg.openInvoice("https://t.me/stars?stars=15", status => { 
                 if(status == 'paid') tg.showAlert("Ого! Спасибо за поддержку, бро! 🚀");
             });
         }
 
-        // СМЕНА ИМЕНИ
         function rename() {
             if (!currentPairId) return alert("Сначала пригласи друга!");
             const res = prompt("Придумай имя:", document.getElementById('name').innerText);
