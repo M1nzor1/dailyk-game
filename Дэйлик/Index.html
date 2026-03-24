@@ -8,40 +8,17 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
     <style>
-        /* ИМБОВЫЙ ДИЗАЙН */
-        body { 
-            background: radial-gradient(circle at center, #1a1a24 0%, #0f0f11 100%); 
-            color: white; font-family: -apple-system, sans-serif; 
-            display: flex; align-items: center; justify-content: center; 
-            height: 100vh; margin: 0; text-align: center; overflow: hidden; 
-        }
-        .support-btn { 
-            position: absolute; right: 10px; top: 50%; transform: translateY(-50%); 
-            background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,140,0,0.2)); 
-            color: #ffb900; padding: 15px 8px; border-radius: 12px; font-size: 11px; 
-            writing-mode: vertical-rl; cursor: pointer; border: 1px solid rgba(255, 215, 0, 0.4); 
-            font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
-        }
-        #streak { 
-            font-size: 100px; font-weight: 900; color: #ff4500; margin: 0; line-height: 0.9;
-            text-shadow: 0 0 20px rgba(255, 69, 0, 0.5); /* Светящийся эффект для стрика */
-        }
-        #name { 
-            font-size: 24px; font-weight: 900; text-decoration: underline dashed #666; 
-            cursor: pointer; margin: 15px 0; letter-spacing: 1px;
-        }
+        body { background: radial-gradient(circle at center, #1a1a24 0%, #0f0f11 100%); color: white; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; overflow: hidden; }
+        .support-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,140,0,0.2)); color: #ffb900; padding: 15px 8px; border-radius: 12px; font-size: 11px; writing-mode: vertical-rl; cursor: pointer; border: 1px solid rgba(255, 215, 0, 0.4); font-weight: 800; text-transform: uppercase; }
+        #streak { font-size: 100px; font-weight: 900; color: #ff4500; margin: 0; line-height: 0.9; text-shadow: 0 0 20px rgba(255, 69, 0, 0.5); }
+        #name { font-size: 24px; font-weight: 900; text-decoration: underline dashed #666; cursor: pointer; margin: 15px 0; letter-spacing: 1px; }
         .container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; max-width: 380px; }
-        img { width: 65vw; max-width: 250px; margin: 10px 0; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        button { 
-            width: 85%; height: 60px; border-radius: 18px; border: none; 
-            font-size: 18px; font-weight: 800; cursor: pointer; transition: 0.2s; 
-            text-transform: uppercase; letter-spacing: 1px; margin: 5px 0;
-        }
-        #actBtn { background: linear-gradient(135deg, #007aff, #0056b3); color: white; box-shadow: 0 4px 15px rgba(0,122,255,0.3); }
-        #actBtn:disabled { background: #2c2c2e; color: #666; box-shadow: none; }
-        .btn-inv { background: linear-gradient(135deg, #34c759, #248a3d); color: white; box-shadow: 0 4px 15px rgba(52,199,89,0.3); }
-        #status { font-size: 12px; color: #888; margin-top: 10px; font-weight: 600; }
+        img { width: 65vw; max-width: 250px; margin: 10px 0; transition: transform 0.2s; }
+        button { width: 85%; height: 60px; border-radius: 18px; border: none; font-size: 18px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; margin: 5px 0; }
+        #actBtn { background: linear-gradient(135deg, #007aff, #0056b3); color: white; display: none; /* СКРЫТО ПО УМОЛЧАНИЮ */ }
+        #actBtn:disabled { background: #2c2c2e; color: #666; }
+        .btn-inv { background: linear-gradient(135deg, #34c759, #248a3d); color: white; }
+        #status { font-size: 13px; color: #ff4500; margin-top: 10px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -51,20 +28,21 @@
         <div style="font-size: 12px; color: #888; font-weight: bold; letter-spacing: 2px;">ДНЕЙ РИЧКА</div>
         <div id="name" onclick="rename()">СИРИЧИК</div>
         <img id="petImg" src="stage0.png">
+        
         <button id="actBtn" onclick="checkIn()">ОТМЕТИТЬСЯ</button>
-        <button class="btn-inv" onclick="invite()">ПОЗВАТЬ ДРУГА</button>
-        <div id="status">Подключение к серверам...</div>
+        <button class="btn-inv" id="invBtn" onclick="invite()">ПОЗВАТЬ ДРУГА</button>
+        <div id="status">Ждем напарника... Отправь ссылку!</div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.setHeaderColor('#0f0f11'); // Красит шапку телеграма в цвет игры
+        tg.setHeaderColor('#0f0f11');
 
-        // ТВОЙ ОФИЦИАЛЬНЫЙ КОНФИГ (Ничего не меняй тут)
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
             authDomain: "dailykgame-d75d8.firebaseapp.com",
+            // ВАЖНО: Твоя европейская ссылка со скрина
             databaseURL: "https://dailykgame-d75d8-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "dailykgame-d75d8",
             appId: "1:762552994938:web:2fdfb8758aa0899e2c6eb"
@@ -72,94 +50,78 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // ПОЛУЧАЕМ ДАННЫЕ ИГРОКОВ
         const myId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : "dev_mode";
         const friendId = tg.initDataUnsafe.start_param;
         
-        // УМНАЯ ЛОГИКА ПАРЫ (Имбовая фича)
-        let path = `solo/${myId}`; // По умолчанию ты один
+        let pairId = null;
+
+        // ЖЕСТКАЯ ПРОВЕРКА: Создаем пару ТОЛЬКО если есть ID друга из ссылки
         if (friendId && friendId !== myId) {
-            // Если перешел по ссылке друга - создаем общую комнату
-            const pairId = myId < friendId ? `${myId}_${friendId}` : `${friendId}_${myId}`;
-            path = `pairs/${pairId}`;
+            pairId = myId < friendId ? `${myId}_${friendId}` : `${friendId}_${myId}`;
+            
+            document.getElementById('actBtn').style.display = 'block';
+            document.getElementById('invBtn').style.display = 'none';
+            document.getElementById('status').innerText = "Подключено к парной базе 🤝";
+            document.getElementById('status').style.color = "#34c759";
+
+            // Слушаем только общую папку пары
+            db.ref(`pairs/${pairId}`).on('value', snap => {
+                const data = snap.val() || { streak: 0, lastTime: 0, name: 'СИРИЧИК' };
+                document.getElementById('streak').innerText = data.streak;
+                document.getElementById('name').innerText = data.name;
+                
+                const img = document.getElementById('petImg');
+                if(data.streak >= 50) img.src = 'stage50.png';
+                else if(data.streak >= 20) img.src = 'stage20.png';
+                else if(data.streak >= 10) img.src = 'stage10.png';
+                else img.src = 'stage0.png';
+
+                const timePassed = Date.now() - data.lastTime;
+                const btn = document.getElementById('actBtn');
+                
+                if (timePassed < 86400000) {
+                    btn.disabled = true;
+                    btn.innerText = 'РИЧОК СОБРАН';
+                    const timeLeft = 86400000 - timePassed;
+                    const h = Math.floor(timeLeft / (1000 * 60 * 60));
+                    const m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    document.getElementById('status').innerText = `Следующая отметка через: ${h}ч ${m}м`;
+                } else {
+                    btn.disabled = false;
+                    btn.innerText = 'ОТМЕТИТЬСЯ';
+                    document.getElementById('status').innerText = "В паре с другом 🤝";
+                }
+            });
+        } else {
+            // ЕСЛИ ЗАШЕЛ ОДИН БЕЗ ССЫЛКИ - БАЗА ДАЖЕ НЕ ПОДКЛЮЧАЕТСЯ
+            document.getElementById('status').innerText = "Ожидание напарника... Отправь ссылку!";
         }
 
-        // ПОДКЛЮЧЕНИЕ К БАЗЕ
-        db.ref(path).on('value', snap => {
-            const data = snap.val() || { streak: 0, lastTime: 0, name: 'СИРИЧИК' };
-            
-            // Обновляем текст
-            document.getElementById('streak').innerText = data.streak;
-            document.getElementById('name').innerText = data.name;
-            
-            // Обновляем картинку в зависимости от стрика
-            const img = document.getElementById('petImg');
-            if(data.streak >= 50) img.src = 'stage50.png';
-            else if(data.streak >= 20) img.src = 'stage20.png';
-            else if(data.streak >= 10) img.src = 'stage10.png';
-            else img.src = 'stage0.png';
-
-            // Логика таймера (24 часа)
-            const timePassed = Date.now() - data.lastTime;
-            const btn = document.getElementById('actBtn');
-            const statusText = document.getElementById('status');
-            
-            if (timePassed < 86400000) { // 24 часа в миллисекундах
-                btn.disabled = true;
-                btn.innerText = 'РИЧОК СОБРАН';
-                
-                // Считаем сколько осталось до завтра
-                const timeLeft = 86400000 - timePassed;
-                const h = Math.floor(timeLeft / (1000 * 60 * 60));
-                const m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                statusText.innerText = `Следующая отметка через: ${h}ч ${m}м`;
-                statusText.style.color = "#ff4500";
-            } else {
-                btn.disabled = false;
-                btn.innerText = 'ОТМЕТИТЬСЯ';
-                statusText.innerText = path.includes('pairs') ? "В паре с другом 🤝" : "Соло-режим (позови друга!)";
-                statusText.style.color = "#34c759";
-            }
-        }, error => {
-            document.getElementById('status').innerText = "ОШИБКА: Открой Rules в Firebase!";
-            document.getElementById('status').style.color = "red";
-        });
-
-        // ФУНКЦИЯ ОТМЕТКИ
         function checkIn() {
+            if (!pairId) return;
             const cur = parseInt(document.getElementById('streak').innerText);
-            db.ref(path).update({ streak: cur + 1, lastTime: Date.now() });
-            
-            // Имбовая анимация и вибрация
+            db.ref(`pairs/${pairId}`).update({ streak: cur + 1, lastTime: Date.now() });
             tg.HapticFeedback.impactOccurred('heavy');
             const img = document.getElementById('petImg');
             img.style.transform = 'scale(1.15)';
-            setTimeout(() => img.style.transform = 'scale(1)', 250);
+            setTimeout(() => img.style.transform = 'scale(1)', 200);
         }
 
-        // ФУНКЦИЯ ПРИГЛАШЕНИЯ
         function invite() {
             const link = `https://t.me/DailykDuoBot/app?startapp=${myId}`;
             tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Залетай делать рички Сиричику вместе со мной!`);
         }
 
-        // ФУНКЦИЯ ДОНАТА (15 Звезд)
         function support() {
             tg.openInvoice("https://t.me/stars?stars=15", status => { 
-                if(status == 'paid') {
-                    tg.showAlert("Ого! Спасибо за поддержку, бро! 🚀");
-                    tg.HapticFeedback.notificationOccurred('success');
-                }
+                if(status == 'paid') tg.showAlert("Спасибо за поддержку! 🚀");
             });
         }
 
-        // СМЕНА ИМЕНИ
         function rename() {
-            const currentName = document.getElementById('name').innerText;
-            const res = prompt("Как назовем этого красавца?", currentName);
-            if(res && res.trim() !== "") {
-                db.ref(path).update({ name: res.substring(0, 15).toUpperCase() });
-            }
+            if (!pairId) return alert("Сначала подключи напарника!");
+            const res = prompt("Как назовем?", document.getElementById('name').innerText);
+            if(res && res.trim() !== "") db.ref(`pairs/${pairId}`).update({ name: res.substring(0, 15).toUpperCase() });
         }
     </script>
 </body>
