@@ -15,7 +15,7 @@
         .container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; max-width: 380px; }
         img { width: 65vw; max-width: 250px; margin: 10px 0; transition: transform 0.2s; }
         button { width: 85%; height: 60px; border-radius: 18px; border: none; font-size: 18px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; margin: 5px 0; }
-        #actBtn { background: linear-gradient(135deg, #007aff, #0056b3); color: white; display: none; /* СКРЫТО ПО УМОЛЧАНИЮ */ }
+        #actBtn { background: linear-gradient(135deg, #007aff, #0056b3); color: white; display: none; }
         #actBtn:disabled { background: #2c2c2e; color: #666; }
         .btn-inv { background: linear-gradient(135deg, #34c759, #248a3d); color: white; }
         #status { font-size: 13px; color: #ff4500; margin-top: 10px; font-weight: 600; }
@@ -31,7 +31,7 @@
         
         <button id="actBtn" onclick="checkIn()">ОТМЕТИТЬСЯ</button>
         <button class="btn-inv" id="invBtn" onclick="invite()">ПОЗВАТЬ ДРУГА</button>
-        <div id="status">Ждем напарника... Отправь ссылку!</div>
+        <div id="status">Загрузка...</div>
     </div>
 
     <script>
@@ -42,7 +42,6 @@
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
             authDomain: "dailykgame-d75d8.firebaseapp.com",
-            // ВАЖНО: Твоя европейская ссылка со скрина
             databaseURL: "https://dailykgame-d75d8-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "dailykgame-d75d8",
             appId: "1:762552994938:web:2fdfb8758aa0899e2c6eb"
@@ -50,57 +49,70 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const myId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : "dev_mode";
-        const friendId = tg.initDataUnsafe.start_param;
+        const myId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : "dev_mode_" + Math.floor(Math.random()*1000);
+        const inviterId = tg.initDataUnsafe.start_param;
         
-        let pairId = null;
+        let currentPairId = null;
 
-        // ЖЕСТКАЯ ПРОВЕРКА: Создаем пару ТОЛЬКО если есть ID друга из ссылки
-        if (friendId && friendId !== myId) {
-            pairId = myId < friendId ? `${myId}_${friendId}` : `${friendId}_${myId}`;
-            
-            document.getElementById('actBtn').style.display = 'block';
-            document.getElementById('invBtn').style.display = 'none';
-            document.getElementById('status').innerText = "Подключено к парной базе 🤝";
-            document.getElementById('status').style.color = "#34c759";
-
-            // Слушаем только общую папку пары
-            db.ref(`pairs/${pairId}`).on('value', snap => {
-                const data = snap.val() || { streak: 0, lastTime: 0, name: 'СИРИЧИК' };
-                document.getElementById('streak').innerText = data.streak;
-                document.getElementById('name').innerText = data.name;
-                
-                const img = document.getElementById('petImg');
-                if(data.streak >= 50) img.src = 'stage50.png';
-                else if(data.streak >= 20) img.src = 'stage20.png';
-                else if(data.streak >= 10) img.src = 'stage10.png';
-                else img.src = 'stage0.png';
-
-                const timePassed = Date.now() - data.lastTime;
-                const btn = document.getElementById('actBtn');
-                
-                if (timePassed < 86400000) {
-                    btn.disabled = true;
-                    btn.innerText = 'РИЧОК СОБРАН';
-                    const timeLeft = 86400000 - timePassed;
-                    const h = Math.floor(timeLeft / (1000 * 60 * 60));
-                    const m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                    document.getElementById('status').innerText = `Следующая отметка через: ${h}ч ${m}м`;
-                } else {
-                    btn.disabled = false;
-                    btn.innerText = 'ОТМЕТИТЬСЯ';
-                    document.getElementById('status').innerText = "В паре с другом 🤝";
-                }
-            });
-        } else {
-            // ЕСЛИ ЗАШЕЛ ОДИН БЕЗ ССЫЛКИ - БАЗА ДАЖЕ НЕ ПОДКЛЮЧАЕТСЯ
-            document.getElementById('status').innerText = "Ожидание напарника... Отправь ссылку!";
+        // 1. ЕСЛИ ЗАШЛИ ПО ССЫЛКЕ ДРУГА — ЗАПИСЫВАЕМ ДРУГ ДРУГА В НАПАРНИКИ
+        if (inviterId && inviterId !== myId) {
+            db.ref('users/' + myId).update({ partner: inviterId });
+            db.ref('users/' + inviterId).update({ partner: myId });
         }
 
+        // 2. ПОСТОЯННО ПРОВЕРЯЕМ СВОЙ ПРОФИЛЬ НА НАЛИЧИЕ НАПАРНИКА
+        db.ref('users/' + myId + '/partner').on('value', snap => {
+            const partnerId = snap.val();
+            
+            if (partnerId) {
+                // НАПАРНИК НАЙДЕН!
+                currentPairId = myId < partnerId ? `${myId}_${partnerId}` : `${partnerId}_${myId}`;
+                
+                document.getElementById('actBtn').style.display = 'block';
+                document.getElementById('invBtn').style.display = 'none';
+                document.getElementById('status').innerText = "Напарник подключен 🤝";
+                document.getElementById('status').style.color = "#34c759";
+
+                // ЧИТАЕМ И ПИШЕМ ОБЩИЕ ДАННЫЕ СИРИЧИКА
+                db.ref(`pairs/${currentPairId}`).on('value', pairSnap => {
+                    const data = pairSnap.val() || { streak: 0, lastTime: 0, name: 'СИРИЧИК' };
+                    document.getElementById('streak').innerText = data.streak;
+                    document.getElementById('name').innerText = data.name;
+                    
+                    const img = document.getElementById('petImg');
+                    if(data.streak >= 50) img.src = 'stage50.png';
+                    else if(data.streak >= 20) img.src = 'stage20.png';
+                    else if(data.streak >= 10) img.src = 'stage10.png';
+                    else img.src = 'stage0.png';
+
+                    const timePassed = Date.now() - data.lastTime;
+                    const btn = document.getElementById('actBtn');
+                    
+                    if (timePassed < 86400000) {
+                        btn.disabled = true;
+                        btn.innerText = 'РИЧОК СОБРАН';
+                        const timeLeft = 86400000 - timePassed;
+                        const h = Math.floor(timeLeft / (1000 * 60 * 60));
+                        const m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                        document.getElementById('status').innerText = `Доступно через: ${h}ч ${m}м`;
+                        document.getElementById('status').style.color = "#ff4500";
+                    } else {
+                        btn.disabled = false;
+                        btn.innerText = 'ОТМЕТИТЬСЯ';
+                        document.getElementById('status').innerText = "В паре с другом 🤝";
+                        document.getElementById('status').style.color = "#34c759";
+                    }
+                });
+            } else {
+                // НАПАРНИКА НЕТ
+                document.getElementById('status').innerText = "Ожидание напарника... Отправь ссылку!";
+            }
+        });
+
         function checkIn() {
-            if (!pairId) return;
+            if (!currentPairId) return;
             const cur = parseInt(document.getElementById('streak').innerText);
-            db.ref(`pairs/${pairId}`).update({ streak: cur + 1, lastTime: Date.now() });
+            db.ref(`pairs/${currentPairId}`).update({ streak: cur + 1, lastTime: Date.now() });
             tg.HapticFeedback.impactOccurred('heavy');
             const img = document.getElementById('petImg');
             img.style.transform = 'scale(1.15)';
@@ -119,9 +131,9 @@
         }
 
         function rename() {
-            if (!pairId) return alert("Сначала подключи напарника!");
+            if (!currentPairId) return alert("Сначала подключи напарника!");
             const res = prompt("Как назовем?", document.getElementById('name').innerText);
-            if(res && res.trim() !== "") db.ref(`pairs/${pairId}`).update({ name: res.substring(0, 15).toUpperCase() });
+            if(res && res.trim() !== "") db.ref(`pairs/${currentPairId}`).update({ name: res.substring(0, 15).toUpperCase() });
         }
     </script>
 </body>
