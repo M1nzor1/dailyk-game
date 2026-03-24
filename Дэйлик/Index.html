@@ -18,7 +18,8 @@
         #actBtn { background: linear-gradient(135deg, #007aff, #0056b3); color: white; display: none; }
         #actBtn:disabled { background: #2c2c2e; color: #666; }
         #invBtn { background: linear-gradient(135deg, #34c759, #248a3d); color: white; display: none; }
-        #resetBtn { background: linear-gradient(135deg, #ff3b30, #b92b27); color: white; display: none; height: 45px; font-size: 14px; width: 60%; margin-top: 10px; }
+        /* КРАСНАЯ КНОПКА УДАЛЕНИЯ */
+        #deleteBtn { background: linear-gradient(135deg, #8b0000, #4a0000); color: white; display: none; height: 45px; font-size: 14px; width: 60%; margin-top: 10px; border: 1px solid #ff4500; }
         #status { font-size: 13px; color: #888; margin-top: 10px; font-weight: 600; }
     </style>
 </head>
@@ -32,7 +33,7 @@
         
         <button id="actBtn" onclick="checkIn()">ОТМЕТИТЬСЯ</button>
         <button id="invBtn" onclick="invite()">ПОЗВАТЬ ДРУГА</button>
-        <button id="resetBtn" onclick="resetStreak()">СБРОСИТЬ ПРОГРЕСС</button>
+        <button id="deleteBtn" onclick="deletePair()">РАЗОРВАТЬ ПАРУ</button>
         <div id="status">Загрузка базы...</div>
     </div>
 
@@ -57,7 +58,7 @@
         const startParam = tg.initDataUnsafe?.start_param?.toString();
         
         let currentPairId = null;
-        let currentPairData = {}; // Сохраняем данные, чтобы использовать при клике
+        let currentPairData = {};
 
         if (!myId) {
             document.getElementById('status').innerText = "Ошибка: Открой игру через Telegram!";
@@ -67,6 +68,7 @@
                 db.ref('users/' + startParam).update({ partner: myId });
             }
 
+            // СЛУШАЕМ ПРОФИЛЬ (ЕСТЬ ЛИ НАПАРНИК)
             db.ref('users/' + myId + '/partner').on('value', snap => {
                 const partnerId = snap.val();
                 
@@ -74,7 +76,7 @@
                     currentPairId = myId < partnerId ? `${myId}_${partnerId}` : `${partnerId}_${myId}`;
                     
                     document.getElementById('actBtn').style.display = 'block';
-                    document.getElementById('resetBtn').style.display = 'block';
+                    document.getElementById('deleteBtn').style.display = 'block';
                     document.getElementById('invBtn').style.display = 'none';
 
                     // ЛОГИКА КООПЕРАТИВА
@@ -91,7 +93,7 @@
                         else if(s >= 10) img.src = 'stage10.png';
                         else img.src = 'stage0.png';
 
-                        const today = new Date().toDateString(); // Получаем сегодняшнюю дату
+                        const today = new Date().toDateString();
                         const clicks = currentPairData.clicks || {};
                         
                         const myClickToday = clicks[myId] === today;
@@ -100,7 +102,6 @@
                         const btn = document.getElementById('actBtn');
                         const statusText = document.getElementById('status');
                         
-                        // Проверяем, кто нажал
                         if (myClickToday && partnerClickToday) {
                             btn.disabled = true;
                             btn.innerText = 'РИЧОК СОБРАН';
@@ -124,34 +125,37 @@
                         }
                     });
                 } else {
+                    // ЕСЛИ НАПАРНИКА НЕТ ИЛИ ЕГО УДАЛИЛИ
+                    currentPairId = null;
                     document.getElementById('invBtn').style.display = 'block';
                     document.getElementById('actBtn').style.display = 'none';
-                    document.getElementById('resetBtn').style.display = 'none';
+                    document.getElementById('deleteBtn').style.display = 'none';
                     document.getElementById('status').innerText = "Нужен друг для старта!";
                     document.getElementById('status').style.color = "#ff4500";
+                    
+                    // Обнуляем визуал на соло-режим ожидания
+                    document.getElementById('streak').innerText = '0';
+                    document.getElementById('name').innerText = 'СИРИЧИК';
+                    document.getElementById('petImg').src = 'stage0.png';
                 }
             });
         }
 
-        // ОТМЕТКА
         function checkIn() {
             if (!currentPairId) return;
-            
             const today = new Date().toDateString();
             const clicks = currentPairData.clicks || {};
             
-            // Вычисляем ID напарника из названия комнаты
             const ids = currentPairId.split('_');
             const partnerId = ids[0] === myId ? ids[1] : ids[0];
             const partnerClickToday = clicks[partnerId] === today;
             
             const updates = {};
-            updates[`clicks/${myId}`] = today; // Записываем, что ТЫ нажал сегодня
+            updates[`clicks/${myId}`] = today; 
             
-            // Если напарник УЖЕ нажал сегодня, и мы еще не давали +1 за этот день
             if (partnerClickToday && currentPairData.lastStreakDate !== today) {
-                updates['streak'] = (currentPairData.streak || 0) + 1; // Даем +1 к общему ричку
-                updates['lastStreakDate'] = today; // Запоминаем, что сегодня уже прибавили
+                updates['streak'] = (currentPairData.streak || 0) + 1; 
+                updates['lastStreakDate'] = today; 
             }
             
             db.ref(`pairs/${currentPairId}`).update(updates);
@@ -162,17 +166,24 @@
             setTimeout(() => img.style.transform = 'scale(1)', 200);
         }
 
-        // СБРОС
-        function resetStreak() {
+        // ФУНКЦИЯ УДАЛЕНИЯ ПАРЫ (ЖЕСТКАЯ)
+        function deletePair() {
             if (!currentPairId) return;
-            const confirmReset = confirm("Ты точно хочешь убить Сиричика и сбросить рички до 0? Это действие нельзя отменить!");
-            if (confirmReset) {
-                const currentName = document.getElementById('name').innerText;
-                db.ref(`pairs/${currentPairId}`).set({ 
-                    streak: 0, 
-                    name: currentName 
+            
+            const confirmDelete = confirm("💀 ВНИМАНИЕ! Ты точно хочешь навсегда разорвать пару и убить Сиричика? Вы потеряете друг друга и весь прогресс!");
+            
+            if (confirmDelete) {
+                const ids = currentPairId.split('_');
+                const partnerId = ids[0] === myId ? ids[1] : ids[0];
+                
+                // Удаляем связи из обоих профилей
+                db.ref('users/' + myId + '/partner').remove();
+                db.ref('users/' + partnerId + '/partner').remove();
+                
+                // Удаляем саму комнату Сиричика
+                db.ref('pairs/' + currentPairId).remove().then(() => {
+                    tg.HapticFeedback.notificationOccurred('error');
                 });
-                tg.HapticFeedback.notificationOccurred('warning');
             }
         }
 
