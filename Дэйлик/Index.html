@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Daily Streak Duo & Snake</title>
+    <title>Daily Streak Duo</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
@@ -14,44 +14,44 @@
         #balance-box { background: rgba(255, 215, 0, 0.1); padding: 5px 15px; border-radius: 20px; font-weight: bold; color: #ffd700; margin-bottom: 10px; border: 1px solid #ffd700; }
         img { width: 45vw; max-width: 180px; margin: 10px 0; }
         button { width: 85%; height: 50px; border-radius: 15px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; margin: 5px 0; }
-        #snakeBtn { background: linear-gradient(135deg, #ffd700, #b8860b); color: #000; }
         #actBtn { background: linear-gradient(135deg, #007aff, #0056b3); color: white; }
+        #snakeBtn { background: linear-gradient(135deg, #ffd700, #b8860b); color: #000; }
+        #invBtn { background: linear-gradient(135deg, #34c759, #248a3d); color: white; }
+        #delBtn { background: transparent; color: #666; font-size: 12px; text-decoration: underline; margin-top: 10px; }
 
         /* ИГРОВОЙ ЭКРАН */
         #gameArea { display: none; flex-direction: column; align-items: center; gap: 10px; }
         #gameCanvas { background: #000; border: 3px solid #333; border-radius: 10px; }
-        
-        /* ПУЛЬТ УПРАВЛЕНИЯ */
-        .controls { display: grid; grid-template-columns: repeat(3, 70px); grid-template-rows: repeat(2, 70px); gap: 10px; margin-top: 15px; }
-        .btn-dir { width: 70px; height: 70px; background: #333; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; user-select: none; -webkit-tap-highlight-color: transparent; }
-        .up { grid-column: 2; }
-        .left { grid-column: 1; grid-row: 2; }
-        .down { grid-column: 2; grid-row: 2; }
-        .right { grid-column: 3; grid-row: 2; }
+        .controls { display: grid; grid-template-columns: repeat(3, 70px); gap: 10px; }
+        .btn-dir { width: 70px; height: 70px; background: #333; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .up { grid-column: 2; } .left { grid-column: 1; } .down { grid-column: 2; } .right { grid-column: 3; }
     </style>
 </head>
 <body>
     <div class="container" id="mainUI">
-        <div id="balance-box">💰 <span id="balance">0</span> RobCoins</div>
+        <div id="balance-box">💰 <span id="balance">0</span> RobCoins (ОБЩИЕ)</div>
         <div id="streak">0</div>
         <div style="font-size: 10px; color: #888; font-weight: bold; letter-spacing: 2px;">ДНЕЙ РИЧКА</div>
         <div id="name" style="font-size: 20px; font-weight: bold; margin: 10px 0;">СИРИЧИК</div>
         <img id="petImg" src="stage0.png">
+        
         <button id="actBtn" onclick="checkIn()">ОТМЕТИТЬСЯ</button>
         <button id="snakeBtn" onclick="startSnake()">ИГРАТЬ В ЗМЕЙКУ 🐍</button>
-        <div id="status" style="font-size: 12px; color: #888;">Загрузка...</div>
+        <button id="invBtn" onclick="invite()">ПОЗВАТЬ ДРУГА</button>
+        <button id="delBtn" onclick="deletePair()">РАЗОРВАТЬ ПАРУ</button>
+        <div id="status" style="font-size: 12px; color: #888; margin-top: 5px;">Загрузка...</div>
     </div>
 
     <div id="gameArea">
         <div id="scoreLabel" style="font-size: 20px; font-weight: bold;">Счет: 0</div>
         <canvas id="gameCanvas" width="300" height="300"></canvas>
         <div class="controls">
-            <div class="btn-dir up" ontouchstart="changeDir(0,-10)">▲</div>
+            <div></div><div class="btn-dir up" ontouchstart="changeDir(0,-10)">▲</div><div></div>
             <div class="btn-dir left" ontouchstart="changeDir(-10,0)">◀</div>
             <div class="btn-dir down" ontouchstart="changeDir(0,10)">▼</div>
             <div class="btn-dir right" ontouchstart="changeDir(10,0)">▶</div>
         </div>
-        <button onclick="stopSnake()" style="background: #ff3b30; color: white; width: 100px; height: 40px; margin-top: 10px;">ВЫЙТИ</button>
+        <button onclick="stopSnake()" style="background:#ff3b30; color:white; width:120px; height:40px; margin-top:10px;">ВЫЙТИ</button>
     </div>
 
     <script>
@@ -59,7 +59,6 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Твой Firebase конфиг
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
             authDomain: "dailykgame-d75d8.firebaseapp.com",
@@ -70,13 +69,38 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const myId = tg.initDataUnsafe?.user?.id?.toString();
-        let myBalance = 0;
+        const startParam = tg.initDataUnsafe?.start_param?.toString();
+        
+        let currentPairId = null;
+        let globalBalance = 0;
 
-        // Загрузка баланса
         if (myId) {
-            db.ref('users/' + myId + '/balance').on('value', s => {
-                myBalance = s.val() || 0;
-                document.getElementById('balance').innerText = myBalance;
+            if (startParam && startParam !== myId) {
+                db.ref('users/' + myId).update({ partner: startParam });
+                db.ref('users/' + startParam).update({ partner: myId });
+            }
+
+            db.ref('users/' + myId + '/partner').on('value', snap => {
+                const partnerId = snap.val();
+                if (partnerId) {
+                    currentPairId = myId < partnerId ? `${myId}_${partnerId}` : `${partnerId}_${myId}`;
+                    document.getElementById('invBtn').style.display = 'none';
+                    document.getElementById('delBtn').style.display = 'block';
+                    document.getElementById('actBtn').style.display = 'block';
+                    
+                    db.ref(`pairs/${currentPairId}`).on('value', p => {
+                        const d = p.val() || {streak: 0, name: 'СИРИЧИК', balance: 0};
+                        globalBalance = d.balance || 0;
+                        document.getElementById('balance').innerText = globalBalance;
+                        document.getElementById('streak').innerText = d.streak;
+                        document.getElementById('name').innerText = d.name;
+                    });
+                } else {
+                    document.getElementById('invBtn').style.display = 'block';
+                    document.getElementById('delBtn').style.display = 'none';
+                    document.getElementById('actBtn').style.display = 'none';
+                    document.getElementById('balance').innerText = "0";
+                }
             });
         }
 
@@ -86,6 +110,7 @@
         let snake, food, dx, dy, score, gameInterval;
 
         function startSnake() {
+            if (!currentPairId) return alert("Сначала позови друга!");
             document.getElementById('mainUI').style.display = 'none';
             document.getElementById('gameArea').style.display = 'flex';
             resetGame();
@@ -111,38 +136,37 @@
 
         function drawGame() {
             const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-            
-            // Проигрыш
             if (head.x < 0 || head.x >= 300 || head.y < 0 || head.y >= 300 || snake.some(s => s.x === head.x && s.y === head.y)) {
-                tg.HapticFeedback.notificationOccurred('error');
-                db.ref('users/' + myId).update({ balance: myBalance + score });
-                alert("ТЫ ПРОИГРАЛ! Заработано: " + score + " RobCoins");
+                db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance + score });
+                alert("Игра окончена! + " + score + " монет в общую копилку!");
                 stopSnake();
                 return;
             }
-
             snake.unshift(head);
             if (head.x === food.x && head.y === food.y) {
                 score++;
                 document.getElementById('scoreLabel').innerText = "Счет: " + score;
                 food = {x: Math.floor(Math.random()*29)*10, y: Math.floor(Math.random()*29)*10};
-                tg.HapticFeedback.impactOccurred('medium');
             } else { snake.pop(); }
-
             ctx.fillStyle = "black"; ctx.fillRect(0,0,300,300);
-            ctx.fillStyle = "#00ff00"; snake.forEach(s => ctx.fillRect(s.x, s.y, 9, 9));
+            ctx.fillStyle = "lime"; snake.forEach(s => ctx.fillRect(s.x, s.y, 9, 9));
             ctx.fillStyle = "red"; ctx.fillRect(food.x, food.y, 9, 9);
         }
 
-        // Управление клавиатурой (стрелки)
-        window.addEventListener("keydown", e => {
-            if (e.key === "ArrowUp") changeDir(0,-10);
-            if (e.key === "ArrowDown") changeDir(0,10);
-            if (e.key === "ArrowLeft") changeDir(-10,0);
-            if (e.key === "ArrowRight") changeDir(10,0);
-        });
+        function deletePair() {
+            if (!confirm("Уверены? Прогресс и общие монеты будут стерты!")) return;
+            const partnerId = currentPairId.replace(myId, "").replace("_", "");
+            db.ref('users/' + myId + '/partner').remove();
+            db.ref('users/' + partnerId + '/partner').remove();
+            db.ref('pairs/' + currentPairId).remove();
+        }
 
-        function checkIn() { /* тут твоя логика ричков */ }
+        function invite() {
+            const link = `https://t.me/DailykDuoBot/${shortName}?startapp=${myId}`;
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Залетай, будем копить RobCoins вместе!`);
+        }
+
+        function checkIn() { /* Твоя логика ричков */ }
     </script>
 </body>
 </html>
