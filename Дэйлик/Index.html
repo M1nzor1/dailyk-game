@@ -9,7 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
     <style>
         body { background: radial-gradient(circle at center, #1a1a24 0%, #0f0f11 100%); color: white; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; overflow: hidden; }
-        .support-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,140,0,0.2)); color: #ffb900; padding: 15px 8px; border-radius: 12px; font-size: 11px; writing-mode: vertical-rl; cursor: pointer; border: 1px solid rgba(255, 215, 0, 0.4); font-weight: 800; text-transform: uppercase; }
+        .support-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,140,0,0.2)); color: #ffb900; padding: 15px 8px; border-radius: 12px; font-size: 11px; writing-mode: vertical-rl; cursor: pointer; border: 1px solid rgba(255, 215, 0, 0.4); font-weight: 800; text-transform: uppercase; z-index: 100;}
         #streak { font-size: 100px; font-weight: 900; color: #ff4500; margin: 0; line-height: 0.9; text-shadow: 0 0 20px rgba(255, 69, 0, 0.5); }
         #name { font-size: 24px; font-weight: 900; text-decoration: underline dashed #666; cursor: pointer; margin: 15px 0; letter-spacing: 1px; }
         .container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; max-width: 380px; }
@@ -17,8 +17,8 @@
         button { width: 85%; height: 60px; border-radius: 18px; border: none; font-size: 18px; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; margin: 5px 0; }
         #actBtn { background: linear-gradient(135deg, #007aff, #0056b3); color: white; display: none; }
         #actBtn:disabled { background: #2c2c2e; color: #666; }
-        .btn-inv { background: linear-gradient(135deg, #34c759, #248a3d); color: white; }
-        #status { font-size: 13px; color: #ff4500; margin-top: 10px; font-weight: 600; }
+        #invBtn { background: linear-gradient(135deg, #34c759, #248a3d); color: white; display: none; }
+        #status { font-size: 13px; color: #888; margin-top: 10px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -30,15 +30,23 @@
         <img id="petImg" src="stage0.png">
         
         <button id="actBtn" onclick="checkIn()">ОТМЕТИТЬСЯ</button>
-        <button class="btn-inv" id="invBtn" onclick="invite()">ПОЗВАТЬ ДРУГА</button>
-        <div id="status">Загрузка...</div>
+        <button id="invBtn" onclick="invite()">ПОЗВАТЬ ДРУГА</button>
+        <div id="status">Загрузка базы...</div>
     </div>
 
     <script>
+        // ----------------------------------------------------
+        // НАСТРОЙКА ССЫЛКИ (ВАЖНО!)
+        // Если в BotFather твой Web App называется "app", оставь так. 
+        // Если "game" или "siri", впиши это слово вместо "app".
+        const shortName = "DailykDuoBot"; 
+        // ----------------------------------------------------
+
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.setHeaderColor('#0f0f11');
 
+        // Твоя европейская база (работает четко)
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
             authDomain: "dailykgame-d75d8.firebaseapp.com",
@@ -49,66 +57,75 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const myId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : "dev_mode_" + Math.floor(Math.random()*1000);
-        const inviterId = tg.initDataUnsafe.start_param;
+        // Получаем ID игроков
+        const myId = tg.initDataUnsafe?.user?.id?.toString();
+        const startParam = tg.initDataUnsafe?.start_param?.toString();
         
         let currentPairId = null;
 
-        // 1. ЕСЛИ ЗАШЛИ ПО ССЫЛКЕ ДРУГА — ЗАПИСЫВАЕМ ДРУГ ДРУГА В НАПАРНИКИ
-        if (inviterId && inviterId !== myId) {
-            db.ref('users/' + myId).update({ partner: inviterId });
-            db.ref('users/' + inviterId).update({ partner: myId });
+        if (!myId) {
+            document.getElementById('status').innerText = "Ошибка: Открой игру через Telegram!";
+        } else {
+            // 1. ЕСЛИ ЗАШЕЛ ПО ССЫЛКЕ ДРУГА - СОЗДАЕМ ПАРУ
+            if (startParam && startParam !== myId) {
+                db.ref('users/' + myId).update({ partner: startParam });
+                db.ref('users/' + startParam).update({ partner: myId });
+            }
+
+            // 2. СЛУШАЕМ СВОЙ ПРОФИЛЬ (ЖДЕМ НАПАРНИКА)
+            db.ref('users/' + myId + '/partner').on('value', snap => {
+                const partnerId = snap.val();
+                
+                if (partnerId) {
+                    // НАПАРНИК НАЙДЕН! ЗАПУСКАЕМ ИГРУ
+                    currentPairId = myId < partnerId ? `${myId}_${partnerId}` : `${partnerId}_${myId}`;
+                    
+                    document.getElementById('actBtn').style.display = 'block';
+                    document.getElementById('invBtn').style.display = 'none';
+                    document.getElementById('status').style.color = "#34c759";
+
+                    // ЗАГРУЖАЕМ СИРИЧИКА ДЛЯ ПАРЫ
+                    db.ref(`pairs/${currentPairId}`).on('value', pairSnap => {
+                        const data = pairSnap.val() || { streak: 0, lastTime: 0, name: 'СИРИЧИК' };
+                        
+                        document.getElementById('streak').innerText = data.streak;
+                        document.getElementById('name').innerText = data.name;
+                        
+                        const img = document.getElementById('petImg');
+                        if(data.streak >= 50) img.src = 'stage50.png';
+                        else if(data.streak >= 20) img.src = 'stage20.png';
+                        else if(data.streak >= 10) img.src = 'stage10.png';
+                        else img.src = 'stage0.png';
+
+                        const timePassed = Date.now() - data.lastTime;
+                        const btn = document.getElementById('actBtn');
+                        
+                        if (timePassed < 86400000) {
+                            btn.disabled = true;
+                            btn.innerText = 'РИЧОК СОБРАН';
+                            const timeLeft = 86400000 - timePassed;
+                            const h = Math.floor(timeLeft / (1000 * 60 * 60));
+                            const m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                            document.getElementById('status').innerText = `Следующая отметка через: ${h}ч ${m}м`;
+                            document.getElementById('status').style.color = "#ff4500";
+                        } else {
+                            btn.disabled = false;
+                            btn.innerText = 'ОТМЕТИТЬСЯ';
+                            document.getElementById('status').innerText = "Напарник в сети. Жми кнопку!";
+                            document.getElementById('status').style.color = "#34c759";
+                        }
+                    });
+                } else {
+                    // НАПАРНИКА НЕТ - ПОКАЗЫВАЕМ КНОПКУ ПРИГЛАШЕНИЯ
+                    document.getElementById('invBtn').style.display = 'block';
+                    document.getElementById('actBtn').style.display = 'none';
+                    document.getElementById('status').innerText = "Нужен друг для старта!";
+                    document.getElementById('status').style.color = "#ff4500";
+                }
+            });
         }
 
-        // 2. ПОСТОЯННО ПРОВЕРЯЕМ СВОЙ ПРОФИЛЬ НА НАЛИЧИЕ НАПАРНИКА
-        db.ref('users/' + myId + '/partner').on('value', snap => {
-            const partnerId = snap.val();
-            
-            if (partnerId) {
-                // НАПАРНИК НАЙДЕН!
-                currentPairId = myId < partnerId ? `${myId}_${partnerId}` : `${partnerId}_${myId}`;
-                
-                document.getElementById('actBtn').style.display = 'block';
-                document.getElementById('invBtn').style.display = 'none';
-                document.getElementById('status').innerText = "Напарник подключен 🤝";
-                document.getElementById('status').style.color = "#34c759";
-
-                // ЧИТАЕМ И ПИШЕМ ОБЩИЕ ДАННЫЕ СИРИЧИКА
-                db.ref(`pairs/${currentPairId}`).on('value', pairSnap => {
-                    const data = pairSnap.val() || { streak: 0, lastTime: 0, name: 'СИРИЧИК' };
-                    document.getElementById('streak').innerText = data.streak;
-                    document.getElementById('name').innerText = data.name;
-                    
-                    const img = document.getElementById('petImg');
-                    if(data.streak >= 50) img.src = 'stage50.png';
-                    else if(data.streak >= 20) img.src = 'stage20.png';
-                    else if(data.streak >= 10) img.src = 'stage10.png';
-                    else img.src = 'stage0.png';
-
-                    const timePassed = Date.now() - data.lastTime;
-                    const btn = document.getElementById('actBtn');
-                    
-                    if (timePassed < 86400000) {
-                        btn.disabled = true;
-                        btn.innerText = 'РИЧОК СОБРАН';
-                        const timeLeft = 86400000 - timePassed;
-                        const h = Math.floor(timeLeft / (1000 * 60 * 60));
-                        const m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                        document.getElementById('status').innerText = `Доступно через: ${h}ч ${m}м`;
-                        document.getElementById('status').style.color = "#ff4500";
-                    } else {
-                        btn.disabled = false;
-                        btn.innerText = 'ОТМЕТИТЬСЯ';
-                        document.getElementById('status').innerText = "В паре с другом 🤝";
-                        document.getElementById('status').style.color = "#34c759";
-                    }
-                });
-            } else {
-                // НАПАРНИКА НЕТ
-                document.getElementById('status').innerText = "Ожидание напарника... Отправь ссылку!";
-            }
-        });
-
+        // КНОПКА ОТМЕТКИ
         function checkIn() {
             if (!currentPairId) return;
             const cur = parseInt(document.getElementById('streak').innerText);
@@ -119,20 +136,23 @@
             setTimeout(() => img.style.transform = 'scale(1)', 200);
         }
 
+        // КНОПКА ПРИГЛАШЕНИЯ (ГЕНЕРАЦИЯ ПРАВИЛЬНОЙ ССЫЛКИ)
         function invite() {
-            const link = `https://t.me/DailykDuoBot/app?startapp=${myId}`;
+            const link = `https://t.me/DailykDuoBot/${shortName}?startapp=${myId}`;
             tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Залетай делать рички Сиричику вместе со мной!`);
         }
 
+        // КНОПКА ПОДДЕРЖКИ
         function support() {
             tg.openInvoice("https://t.me/stars?stars=15", status => { 
-                if(status == 'paid') tg.showAlert("Спасибо за поддержку! 🚀");
+                if(status == 'paid') tg.showAlert("Ого! Спасибо за поддержку, бро! 🚀");
             });
         }
 
+        // СМЕНА ИМЕНИ
         function rename() {
-            if (!currentPairId) return alert("Сначала подключи напарника!");
-            const res = prompt("Как назовем?", document.getElementById('name').innerText);
+            if (!currentPairId) return alert("Сначала пригласи друга!");
+            const res = prompt("Придумай имя:", document.getElementById('name').innerText);
             if(res && res.trim() !== "") db.ref(`pairs/${currentPairId}`).update({ name: res.substring(0, 15).toUpperCase() });
         }
     </script>
