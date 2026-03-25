@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Daily Streak Duo: Economy Edition</title>
+    <title>Daily Streak Duo: Team Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
@@ -15,12 +15,18 @@
         #mid-block { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100% }
         #name { font-size: 24px; font-weight: 900; margin-bottom: 10px; letter-spacing: 1px; cursor: pointer; border-bottom: 2px dashed rgba(255,215,0,0.4); padding-bottom: 2px; color: #fff; }
         img#petImg { width: 75vw; max-width: 280px; filter: drop-shadow(0 0 20px rgba(0,122,255,0.2)); }
+        
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; margin-top: 10px; }
         button { border-radius: 20px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        
+        /* КНОПКИ ДЕЙСТВИЙ */
         .btn-check { width: 90%; height: 55px; background: linear-gradient(135deg, #007aff, #0056b3); color: white; font-size: 16px; }
+        .btn-invite { width: 90%; height: 55px; background: linear-gradient(135deg, #34c759, #248a3d); color: white; font-size: 16px; box-shadow: 0 4px 15px rgba(52,199,89,0.3); }
+        
         .btn-game { height: 70px; background: #1c1c1e; color: #ffd700; border: 1px solid #333; font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
         .btn-game span { font-size: 22px; }
         #delBtn { background: transparent; color: #444; font-size: 10px; text-decoration: underline; margin-top: 5px; }
+        
         #gameOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
         canvas { background: #050505; border: 2px solid #333; border-radius: 15px; }
         .controls { display: grid; grid-template-columns: repeat(3, 75px); gap: 12px; margin-top: 20px; }
@@ -43,7 +49,11 @@
         </div>
 
         <div id="bottom">
-            <button class="btn-check" onclick="checkIn()">ОТМЕТИТЬСЯ</button>
+            <!-- КНОПКА ОТМЕТКИ (ДЛЯ ПАРЫ) -->
+            <button id="actBtn" class="btn-check" onclick="checkIn()" style="display:none;">ОТМЕТИТЬСЯ</button>
+            <!-- КНОПКА ИНВАЙТА (ДЛЯ ОДИНОЧЕК) -->
+            <button id="invBtn" class="btn-invite" onclick="inviteFriend()" style="display:none;">ПОЗВАТЬ НАПАРНИКА 🤝</button>
+
             <div class="menu-grid">
                 <button class="btn-game" onclick="startGame('snake')"><span>🐍</span>ЗМЕЙКА</button>
                 <button class="btn-game" onclick="startGame('rocket')"><span>🚀</span>РАКЕТА</button>
@@ -68,6 +78,7 @@
     </div>
 
     <script>
+        const shortName = "seriychik"; // УБЕДИСЬ ЧТО ЭТО ИМЯ ТВОЕГО БОТА В ТЕЛЕГЕ
         const tg = window.Telegram.WebApp;
         tg.expand();
 
@@ -81,13 +92,25 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const myId = tg.initDataUnsafe?.user?.id?.toString();
-        let currentPairId = null, globalBalance = 0, gameLoop, score, currentName = "";
+        const startParam = tg.initDataUnsafe?.start_param?.toString();
+        
+        let currentPairId = null, globalBalance = 0, currentName = "СИРИЧИК";
 
         if (myId) {
+            // ЛОГИКА СОЗДАНИЯ ПАРЫ ПО ССЫЛКЕ
+            if (startParam && startParam !== myId) {
+                db.ref('users/' + myId).update({ partner: startParam });
+                db.ref('users/' + startParam).update({ partner: myId });
+            }
+
             db.ref('users/' + myId + '/partner').on('value', snap => {
                 const pId = snap.val();
                 if (pId) {
+                    // ЕСЛИ ПАРА ЕСТЬ
+                    document.getElementById('actBtn').style.display = 'block';
+                    document.getElementById('invBtn').style.display = 'none';
                     currentPairId = myId < pId ? `${myId}_${pId}` : `${pId}_${myId}`;
+                    
                     db.ref(`pairs/${currentPairId}`).on('value', p => {
                         const d = p.val() || {streak: 0, balance: 0, name: 'СИРИЧИК'};
                         globalBalance = d.balance || 0;
@@ -95,54 +118,58 @@
                         document.getElementById('balance').innerText = globalBalance;
                         document.getElementById('streak').innerText = d.streak;
                         document.getElementById('name').innerText = currentName;
+                        
+                        let stage = 0;
+                        if (d.streak >= 10) stage = 10;
+                        if (d.streak >= 20) stage = 20;
+                        if (d.streak >= 50) stage = 50;
+                        document.getElementById('petImg').src = `stage${stage}.png`;
                     });
+                } else {
+                    // ЕСЛИ ПАРЫ НЕТ
+                    document.getElementById('actBtn').style.display = 'none';
+                    document.getElementById('invBtn').style.display = 'block';
+                    document.getElementById('streak').innerText = "0";
+                    document.getElementById('balance').innerText = "0";
+                    document.getElementById('name').innerText = "НУЖЕН ДРУГ";
                 }
             });
         }
 
-        // --- ЛОГИКА СМЕНЫ ИМЕНИ ЗА 50 МОНЕТ ---
+        function inviteFriend() {
+            const link = `https://t.me/DailykDuoBot/${shortName}?startapp=${myId}`;
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Залетай ко мне в пару! Будем делать рички и растить Сиричика 🚀`);
+        }
+
         function renamePet() {
             if (!currentPairId) return;
-
-            // Если имя еще стандартное - даем сменить бесплатно один раз
-            const isFirstTime = (currentName === "СИРИЧИК");
-
-            if (!isFirstTime && globalBalance < 50) {
-                alert("Недостаточно RobCoins! Нужно 50 💰");
-                return;
-            }
-
-            const costText = isFirstTime ? "Первая смена бесплатно!" : "Это будет стоить 50 RobCoins!";
-            const newName = prompt(costText + "\nКак назовем?", currentName);
-
-            if (newName && newName.length > 0 && newName.length < 15 && newName.toUpperCase() !== currentName) {
+            const isFirst = (currentName === "СИРИЧИК" || currentName === "НУЖЕН ДРУГ");
+            if (!isFirst && globalBalance < 50) return alert("Нужно 50 RobCoins! 💰");
+            
+            const newName = prompt(isFirst ? "Придумай имя!" : "Смена имени стоит 50 монет! Как назовем?", currentName);
+            if (newName && newName.length > 0 && newName.length < 15) {
                 const updates = { name: newName.toUpperCase() };
-                
-                // Если не бесплатно, вычитаем монеты
-                if (!isFirstTime) {
-                    updates.balance = globalBalance - 50;
-                }
-
+                if (!isFirst) updates.balance = globalBalance - 50;
                 db.ref(`pairs/${currentPairId}`).update(updates);
                 tg.HapticFeedback.notificationOccurred('success');
-                if (!isFirstTime) alert("Имя успешно изменено! Списано 50 💰");
             }
         }
 
-        // --- ОСТАЛЬНАЯ ЛОГИКА (БЕЗ ИЗМЕНЕНИЙ) ---
         function checkIn() {
             if (!currentPairId) return;
             const today = new Date().toISOString().split('T')[0];
             db.ref(`pairs/${currentPairId}/clicks/${myId}`).set(today);
             tg.HapticFeedback.impactOccurred('heavy');
+            alert("Ты отметился! Ждем напарника.");
         }
 
+        // --- ЛОГИКА ИГР (СМЕРТЬ, КОНЕЦ, ПУЛЬТ) ---
+        let gameLoop, score, snake, food, dx, dy, player, enemies, rocketDir = 0;
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
-        let snake, food, dx, dy, player, enemies, rocketDir = 0;
 
         function startGame(type) {
-            if (!currentPairId) return;
+            if (!currentPairId) return alert("Сначала позови друга!");
             document.getElementById('mainUI').style.display = 'none';
             document.getElementById('gameOverlay').style.display = 'flex';
             document.getElementById('snakeCtrl').style.display = type === 'snake' ? 'grid' : 'none';
@@ -159,8 +186,7 @@
             snake.unshift(head);
             if (head.x===food.x&&head.y===food.y) { score++; food={x:Math.floor(Math.random()*29)*10, y:Math.floor(Math.random()*29)*10}; } else { snake.pop(); }
             ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
-            ctx.fillStyle="lime"; snake.forEach(s=>ctx.fillRect(s.x,s.y,9,9));
-            ctx.fillStyle="red"; ctx.fillRect(food.x,food.y,9,9);
+            ctx.fillStyle="lime"; snake.forEach(s=>ctx.fillRect(s.x,s.y,9,9)); ctx.fillStyle="red"; ctx.fillRect(food.x,food.y,9,9);
             document.getElementById('gameScore').innerText = score;
         }
         function moveRocket(d) { rocketDir = d; }
@@ -183,7 +209,7 @@
             exitGame();
         }
         function changeDir(nx, ny) { if (nx !== -dx && ny !== -dy) { dx = nx; dy = ny; } }
-        function deletePair() { if (confirm("УДАЛИТЬ ВСЁ?")) { db.ref('pairs/'+currentPairId).remove(); location.reload(); } }
+        function deletePair() { if (confirm("УДАЛИТЬ ВСЁ?")) { db.ref('users/'+myId+'/partner').remove(); db.ref('pairs/'+currentPairId).remove(); location.reload(); } }
     </script>
 </body>
 </html>
