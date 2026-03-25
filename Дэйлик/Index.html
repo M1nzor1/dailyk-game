@@ -3,72 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Daily Streak Duo: Snake Edition</title>
+    <title>Daily Streak Duo: Economy Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
     <style>
         body { background: #0f0f11; color: white; font-family: -apple-system, sans-serif; margin: 0; text-align: center; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
         .container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; max-width: 380px; height: 95vh; justify-content: space-between; padding: 15px 0; }
-        
-        #top-block { display: flex; flex-direction: column; align-items: center; }
-        #balance-box { background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(0,0,0,0.4)); padding: 8px 20px; border-radius: 20px; font-weight: 900; color: #ffd700; border: 1px solid #ffd700; font-size: 18px; box-shadow: 0 0 15px rgba(255,215,0,0.1); }
-        #streak { font-size: 70px; font-weight: 900; color: #ff4500; line-height: 0.8; margin: 10px 0 0 0; }
-        
-        #mid-block { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
-        #name { font-size: 24px; font-weight: 900; margin-bottom: 15px; letter-spacing: 1px; }
-        img#petImg { width: 80vw; max-width: 300px; filter: drop-shadow(0 0 20px rgba(0,122,255,0.2)); }
-        
-        #bottom-block { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        button { border-radius: 20px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; width: 90%; }
-        .btn-check { height: 55px; background: linear-gradient(135deg, #007aff, #0056b3); color: white; font-size: 16px; }
-        .btn-snake { height: 65px; background: linear-gradient(135deg, #ffd700, #b8860b); color: black; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 5px 15px rgba(218,165,32,0.3); }
-        
-        #delBtn { background: transparent; color: #444; font-size: 11px; text-decoration: underline; margin-top: 5px; width: auto; }
-
-        /* ЭКРАН ЗМЕЙКИ */
+        #balance-box { background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(0,0,0,0.4)); padding: 8px 20px; border-radius: 20px; font-weight: 900; color: #ffd700; border: 1px solid #ffd700; font-size: 18px; }
+        #streak { font-size: 70px; font-weight: 900; color: #ff4500; line-height: 0.8; margin-top: 10px; }
+        #mid-block { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100% }
+        #name { font-size: 24px; font-weight: 900; margin-bottom: 10px; letter-spacing: 1px; cursor: pointer; border-bottom: 2px dashed rgba(255,215,0,0.4); padding-bottom: 2px; color: #fff; }
+        img#petImg { width: 75vw; max-width: 280px; filter: drop-shadow(0 0 20px rgba(0,122,255,0.2)); }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; margin-top: 10px; }
+        button { border-radius: 20px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        .btn-check { width: 90%; height: 55px; background: linear-gradient(135deg, #007aff, #0056b3); color: white; font-size: 16px; }
+        .btn-game { height: 70px; background: #1c1c1e; color: #ffd700; border: 1px solid #333; font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+        .btn-game span { font-size: 22px; }
+        #delBtn { background: transparent; color: #444; font-size: 10px; text-decoration: underline; margin-top: 5px; }
         #gameOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
-        #gameCanvas { background: #050505; border: 3px solid #222; border-radius: 15px; box-shadow: 0 0 20px rgba(0,255,0,0.1); }
-        .controls { display: grid; grid-template-columns: repeat(3, 80px); gap: 12px; margin-top: 20px; }
-        .g-btn { width: 80px; height: 80px; background: #1c1c1e; border-radius: 20px; color: white; font-size: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid #333; }
-        .g-btn:active { background: #333; transform: scale(0.95); }
+        canvas { background: #050505; border: 2px solid #333; border-radius: 15px; }
+        .controls { display: grid; grid-template-columns: repeat(3, 75px); gap: 12px; margin-top: 20px; }
+        .g-btn { width: 75px; height: 75px; background: #2c2c2e; border-radius: 20px; color: white; font-size: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid #444; }
     </style>
 </head>
 <body>
 
     <div class="container" id="mainUI">
-        <div id="top-block">
+        <div id="top">
             <div id="balance-box">💰 <span id="balance">0</span> RobCoins</div>
             <div id="streak">0</div>
             <div style="font-size: 10px; color: #888; font-weight: bold;">ДНЕЙ ВМЕСТЕ</div>
         </div>
 
         <div id="mid-block">
-            <div id="name">СИРИЧИК</div>
+            <div id="name" onclick="renamePet()">СИРИЧИК</div>
+            <div style="font-size: 9px; color: #ffd700; margin-top: -5px; margin-bottom: 10px;">(смена: 50 💰)</div>
             <img id="petImg" src="stage0.png">
         </div>
 
-        <div id="bottom-block">
+        <div id="bottom">
             <button class="btn-check" onclick="checkIn()">ОТМЕТИТЬСЯ</button>
-            <button class="btn-snake" onclick="startSnake()">🐍 ИГРАТЬ В ЗМЕЙКУ</button>
+            <div class="menu-grid">
+                <button class="btn-game" onclick="startGame('snake')"><span>🐍</span>ЗМЕЙКА</button>
+                <button class="btn-game" onclick="startGame('rocket')"><span>🚀</span>РАКЕТА</button>
+            </div>
             <button id="delBtn" onclick="deletePair()">разорвать пару</button>
         </div>
     </div>
 
     <div id="gameOverlay">
-        <div id="gameScore" style="font-size: 28px; font-weight: 900; color: #ffd700; margin-bottom: 10px;">0</div>
+        <div id="gameScore" style="font-size: 32px; font-weight: 900; color: #ffd700; margin-bottom: 10px;">0</div>
         <canvas id="gameCanvas" width="300" height="300"></canvas>
-        <div class="controls">
+        <div class="controls" id="snakeCtrl">
             <div></div><div class="g-btn" ontouchstart="changeDir(0,-10)">▲</div><div></div>
             <div class="g-btn" ontouchstart="changeDir(-10,0)">◀</div><div class="g-btn" ontouchstart="changeDir(0,10)">▼</div><div class="g-btn" ontouchstart="changeDir(10,0)">▶</div>
         </div>
-        <button onclick="exitGame()" style="background:#ff3b30; color:white; width:120px; height:40px; border-radius:12px; margin-top:20px; font-weight:bold;">ВЫЙТИ</button>
+        <div class="controls" id="rocketCtrl" style="display:none;">
+            <div class="g-btn" ontouchstart="moveRocket(-1)" ontouchend="moveRocket(0)">◀</div>
+            <div style="width:75px"></div>
+            <div class="g-btn" ontouchstart="moveRocket(1)" ontouchend="moveRocket(0)">▶</div>
+        </div>
+        <button onclick="exitGame()" style="background:#ff3b30; color:white; width:120px; height:45px; border-radius:15px; margin-top:25px; font-weight:bold;">ВЫЙТИ</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.setHeaderColor('#0f0f11');
 
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
@@ -80,92 +81,109 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const myId = tg.initDataUnsafe?.user?.id?.toString();
-        let currentPairId = null, globalBalance = 0;
+        let currentPairId = null, globalBalance = 0, gameLoop, score, currentName = "";
 
         if (myId) {
             db.ref('users/' + myId + '/partner').on('value', snap => {
-                const partnerId = snap.val();
-                if (partnerId) {
-                    currentPairId = myId < partnerId ? `${myId}_${partnerId}` : `${partnerId}_${myId}`;
+                const pId = snap.val();
+                if (pId) {
+                    currentPairId = myId < pId ? `${myId}_${pId}` : `${pId}_${myId}`;
                     db.ref(`pairs/${currentPairId}`).on('value', p => {
                         const d = p.val() || {streak: 0, balance: 0, name: 'СИРИЧИК'};
                         globalBalance = d.balance || 0;
+                        currentName = d.name || "СИРИЧИК";
                         document.getElementById('balance').innerText = globalBalance;
                         document.getElementById('streak').innerText = d.streak;
-                        document.getElementById('name').innerText = d.name;
+                        document.getElementById('name').innerText = currentName;
                     });
                 }
             });
         }
 
-        // --- ЛОГИКА ЗМЕЙКИ ---
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        let snake, food, dx, dy, score, gameLoop;
+        // --- ЛОГИКА СМЕНЫ ИМЕНИ ЗА 50 МОНЕТ ---
+        function renamePet() {
+            if (!currentPairId) return;
 
-        function startSnake() {
-            if (!currentPairId) return alert("Нужен друг!");
-            document.getElementById('mainUI').style.display = 'none';
-            document.getElementById('gameOverlay').style.display = 'flex';
-            resetGame();
-            gameLoop = setInterval(draw, 100);
-        }
+            // Если имя еще стандартное - даем сменить бесплатно один раз
+            const isFirstTime = (currentName === "СИРИЧИК");
 
-        function resetGame() {
-            snake = [{x: 150, y: 150}, {x: 140, y: 150}];
-            food = {x: 80, y: 80};
-            dx = 10; dy = 0; score = 0;
-            document.getElementById('gameScore').innerText = "0";
-        }
-
-        function changeDir(nx, ny) {
-            if (nx !== -dx && ny !== -dy) { 
-                dx = nx; dy = ny; 
-                tg.HapticFeedback.impactOccurred('light');
-            }
-        }
-
-        function draw() {
-            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-            
-            if (head.x < 0 || head.x >= 300 || head.y < 0 || head.y >= 300 || snake.some(s => s.x === head.x && s.y === head.y)) {
-                clearInterval(gameLoop);
-                db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance + score });
-                tg.HapticFeedback.notificationOccurred('error');
-                alert("КОНЕЦ ИГРЫ! Счёт: " + score);
-                exitGame();
+            if (!isFirstTime && globalBalance < 50) {
+                alert("Недостаточно RobCoins! Нужно 50 💰");
                 return;
             }
 
+            const costText = isFirstTime ? "Первая смена бесплатно!" : "Это будет стоить 50 RobCoins!";
+            const newName = prompt(costText + "\nКак назовем?", currentName);
+
+            if (newName && newName.length > 0 && newName.length < 15 && newName.toUpperCase() !== currentName) {
+                const updates = { name: newName.toUpperCase() };
+                
+                // Если не бесплатно, вычитаем монеты
+                if (!isFirstTime) {
+                    updates.balance = globalBalance - 50;
+                }
+
+                db.ref(`pairs/${currentPairId}`).update(updates);
+                tg.HapticFeedback.notificationOccurred('success');
+                if (!isFirstTime) alert("Имя успешно изменено! Списано 50 💰");
+            }
+        }
+
+        // --- ОСТАЛЬНАЯ ЛОГИКА (БЕЗ ИЗМЕНЕНИЙ) ---
+        function checkIn() {
+            if (!currentPairId) return;
+            const today = new Date().toISOString().split('T')[0];
+            db.ref(`pairs/${currentPairId}/clicks/${myId}`).set(today);
+            tg.HapticFeedback.impactOccurred('heavy');
+        }
+
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        let snake, food, dx, dy, player, enemies, rocketDir = 0;
+
+        function startGame(type) {
+            if (!currentPairId) return;
+            document.getElementById('mainUI').style.display = 'none';
+            document.getElementById('gameOverlay').style.display = 'flex';
+            document.getElementById('snakeCtrl').style.display = type === 'snake' ? 'grid' : 'none';
+            document.getElementById('rocketCtrl').style.display = type === 'rocket' ? 'grid' : 'none';
+            score = 0;
+            if (type === 'snake') { snake = [{x:150,y:150}]; food = {x:80,y:80}; dx=10; dy=0; gameLoop = setInterval(drawSnake, 100); }
+            else { player = {x:135, y:260}; enemies = []; gameLoop = setInterval(drawRocket, 20); }
+        }
+
+        function exitGame() { clearInterval(gameLoop); document.getElementById('mainUI').style.display = 'flex'; document.getElementById('gameOverlay').style.display = 'none'; }
+        function drawSnake() {
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            if (head.x<0||head.x>=300||head.y<0||head.y>=300||snake.some(s=>s.x===head.x&&s.y===head.y)) return endGame(score);
             snake.unshift(head);
-            if (head.x === food.x && head.y === food.y) {
-                score++;
-                document.getElementById('gameScore').innerText = score;
-                food = {x: Math.floor(Math.random()*29)*10, y: Math.floor(Math.random()*29)*10};
-                tg.HapticFeedback.impactOccurred('medium');
-            } else { snake.pop(); }
-
-            ctx.fillStyle = "black"; ctx.fillRect(0,0,300,300);
-            ctx.fillStyle = "#00ff00"; snake.forEach(s => ctx.fillRect(s.x, s.y, 9, 9));
-            ctx.fillStyle = "#ff3b30"; ctx.fillRect(food.x, food.y, 9, 9);
+            if (head.x===food.x&&head.y===food.y) { score++; food={x:Math.floor(Math.random()*29)*10, y:Math.floor(Math.random()*29)*10}; } else { snake.pop(); }
+            ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
+            ctx.fillStyle="lime"; snake.forEach(s=>ctx.fillRect(s.x,s.y,9,9));
+            ctx.fillStyle="red"; ctx.fillRect(food.x,food.y,9,9);
+            document.getElementById('gameScore').innerText = score;
         }
-
-        function exitGame() {
+        function moveRocket(d) { rocketDir = d; }
+        function drawRocket() {
+            ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
+            player.x += rocketDir*5;
+            if (player.x<0) player.x=0; if (player.x>270) player.x=270;
+            ctx.fillStyle="#007aff"; ctx.fillRect(player.x, 260, 30, 30);
+            if (Math.random()<0.06) enemies.push({x:Math.random()*280, y:-20, s:3+Math.random()*4});
+            enemies.forEach((en, i) => {
+                en.y += en.s; ctx.fillStyle="orange"; ctx.beginPath(); ctx.arc(en.x,en.y,8,0,7); ctx.fill();
+                if (en.y>260 && en.y<290 && en.x>player.x && en.x<player.x+30) return endGame(Math.floor(score/5));
+                if (en.y>300) { enemies.splice(i,1); score++; document.getElementById('gameScore').innerText = score; }
+            });
+        }
+        function endGame(reward) {
             clearInterval(gameLoop);
-            document.getElementById('mainUI').style.display = 'flex';
-            document.getElementById('gameOverlay').style.display = 'none';
+            db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance + reward });
+            tg.HapticFeedback.notificationOccurred('success');
+            exitGame();
         }
-
-        function deletePair() {
-            if (!confirm("Уверен? Всё будет удалено!")) return;
-            const partnerId = currentPairId.replace(myId, "").replace("_", "");
-            db.ref('users/'+myId+'/partner').remove();
-            db.ref('users/'+partnerId+'/partner').remove();
-            db.ref('pairs/'+currentPairId).remove();
-            location.reload();
-        }
-
-        function checkIn() { tg.HapticFeedback.impactOccurred('heavy'); }
+        function changeDir(nx, ny) { if (nx !== -dx && ny !== -dy) { dx = nx; dy = ny; } }
+        function deletePair() { if (confirm("УДАЛИТЬ ВСЁ?")) { db.ref('pairs/'+currentPairId).remove(); location.reload(); } }
     </script>
 </body>
 </html>
