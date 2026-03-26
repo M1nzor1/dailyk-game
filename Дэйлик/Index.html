@@ -3,37 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Daily Streak Duo: Ultimate</title>
+    <title>Daily Streak Duo: Quests Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
     <style>
         body { background: #0f0f11; color: white; font-family: -apple-system, sans-serif; margin: 0; text-align: center; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
-        .container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; max-width: 380px; height: 95vh; justify-content: space-between; padding: 15px 0; }
+        .container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; max-width: 380px; height: 95vh; justify-content: space-between; padding: 10px 0; }
         
-        #balance-box { background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(0,0,0,0.4)); padding: 8px 20px; border-radius: 20px; font-weight: 900; color: #ffd700; border: 1px solid #ffd700; font-size: 18px; box-shadow: 0 0 15px rgba(255,215,0,0.1); }
-        #streak { font-size: 70px; font-weight: 900; color: #ff4500; line-height: 0.8; margin-top: 10px; }
+        #balance-box { background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(0,0,0,0.6)); padding: 6px 20px; border-radius: 20px; font-weight: 900; color: #ffd700; border: 1px solid #ffd700; font-size: 16px; box-shadow: 0 0 15px rgba(255,215,0,0.1); }
+        #streak { font-size: 60px; font-weight: 900; color: #ff4500; line-height: 0.8; margin-top: 5px; }
         
-        #mid-block { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100% }
-        #name { font-size: 24px; font-weight: 900; margin-bottom: 5px; letter-spacing: 1px; cursor: pointer; border-bottom: 2px dashed rgba(255,215,0,0.4); padding-bottom: 2px; color: #fff; }
-        img#petImg { width: 75vw; max-width: 280px; filter: drop-shadow(0 0 20px rgba(0,122,255,0.2)); transition: transform 0.3s; }
+        #mid-block { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+        #name { font-size: 22px; font-weight: 900; margin-bottom: 2px; letter-spacing: 1px; cursor: pointer; border-bottom: 2px dashed rgba(255,215,0,0.4); padding-bottom: 2px; color: #fff; }
+        img#petImg { width: 70vw; max-width: 250px; filter: drop-shadow(0 0 20px rgba(0,122,255,0.2)); transition: transform 0.3s; margin-top: 5px; }
         
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; margin-top: 10px; }
-        button { border-radius: 20px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 90%; margin-top: 5px; }
+        button { border-radius: 15px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
         button:active { transform: scale(0.95); }
         
-        .btn-check { width: 90%; height: 55px; background: linear-gradient(135deg, #007aff, #0056b3); color: white; font-size: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .btn-invite { width: 90%; height: 55px; background: linear-gradient(135deg, #34c759, #248a3d); color: white; font-size: 16px; box-shadow: 0 4px 15px rgba(52,199,89,0.3); }
-        .btn-game { height: 70px; background: #1c1c1e; color: #ffd700; border: 1px solid #333; font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
-        .btn-game span { font-size: 22px; }
+        .btn-check { width: 90%; height: 50px; background: linear-gradient(135deg, #007aff, #0056b3); color: white; font-size: 15px; box-shadow: 0 4px 15px rgba(0,122,255,0.3); }
+        .btn-invite { width: 90%; height: 50px; background: linear-gradient(135deg, #34c759, #248a3d); color: white; font-size: 15px; box-shadow: 0 4px 15px rgba(52,199,89,0.3); }
         
-        #delBtn { background: transparent; color: #444; font-size: 10px; text-decoration: underline; margin-top: 10px; }
+        .btn-game { height: 60px; background: #1c1c1e; color: #ffd700; border: 1px solid #333; font-size: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+        .btn-game span { font-size: 20px; }
+        
+        .btn-bonus { background: linear-gradient(135deg, #8a2be2, #4b0082); color: white; border: 1px solid #9932cc; }
+        .btn-quest { background: linear-gradient(135deg, #ff4500, #b22222); color: white; border: 1px solid #ff6347; }
+        
+        #delBtn { background: transparent; color: #444; font-size: 10px; text-decoration: underline; margin-top: 5px; }
 
         /* ИГРОВОЙ ЭКРАН */
-        #gameOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0f11; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
         canvas { background: #050505; border: 2px solid #333; border-radius: 15px; }
         .controls { display: grid; grid-template-columns: repeat(3, 75px); gap: 12px; margin-top: 20px; }
         .g-btn { width: 75px; height: 75px; background: #2c2c2e; border-radius: 20px; color: white; font-size: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid #444; }
+
+        /* МЕНЮ КВЕСТОВ */
+        .quest-box { background: #1c1c1e; border: 1px solid #333; width: 85%; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: left; }
+        .quest-title { font-size: 14px; font-weight: bold; color: #fff; margin-bottom: 5px; }
+        .quest-reward { font-size: 12px; color: #ffd700; font-weight: bold; }
+        .quest-progress { font-size: 12px; color: #888; float: right; }
+        .quest-done { border-color: #34c759; background: rgba(52,199,89,0.1); }
     </style>
 </head>
 <body>
@@ -47,33 +58,49 @@
 
         <div id="mid-block">
             <div id="name" onclick="renamePet()">СИРИЧИК</div>
-            <div style="font-size: 9px; color: #ffd700; margin-bottom: 10px;">(смена: 50 💰)</div>
+            <div style="font-size: 9px; color: #ffd700; margin-bottom: 5px;">(смена: 50 💰)</div>
             <img id="petImg" src="stage0.png">
         </div>
 
-        <div id="bottom">
-            <button id="actBtn" class="btn-check" onclick="checkIn()" style="display:none;">ОТМЕТИТЬСЯ</button>
-            <button id="invBtn" class="btn-invite" onclick="inviteFriend()" style="display:none;">ПОЗВАТЬ НАПАРНИКА 🤝</button>
+        <div id="bottom" style="width: 100%;">
+            <button id="actBtn" class="btn-check" onclick="checkIn()" style="display:none; margin: 0 auto;">ОТМЕТИТЬСЯ</button>
+            <button id="invBtn" class="btn-invite" onclick="inviteFriend()" style="display:none; margin: 0 auto;">ПОЗВАТЬ НАПАРНИКА 🤝</button>
 
-            <div class="menu-grid">
+            <div class="menu-grid" style="margin: 10px auto;">
                 <button class="btn-game" onclick="startGame('snake')"><span>🐍</span>ЗМЕЙКА</button>
                 <button class="btn-game" onclick="startGame('rocket')"><span>🚀</span>РАКЕТА</button>
+                <button class="btn-game btn-bonus" onclick="openChest()"><span>🎁</span>СУНДУК</button>
+                <button class="btn-game btn-quest" onclick="showQuests()"><span>🎯</span>КВЕСТЫ</button>
             </div>
             <button id="delBtn" onclick="deletePair()">разорвать пару</button>
         </div>
     </div>
 
-    <div id="gameOverlay">
+    <div id="questsOverlay" class="overlay">
+        <h2 style="color: #ff4500;">🎯 ЕЖЕДНЕВНЫЕ КВЕСТЫ</h2>
+        
+        <div class="quest-box" id="q1-box">
+            <div class="quest-title">🐍 Змейка-Про</div>
+            <div class="quest-reward">Награда: 50 💰 <span class="quest-progress" id="q1-prog">0/15 очков</span></div>
+        </div>
+        
+        <div class="quest-box" id="q2-box">
+            <div class="quest-title">🚀 Космонавт</div>
+            <div class="quest-reward">Награда: 50 💰 <span class="quest-progress" id="q2-prog">0/3 игр</span></div>
+        </div>
+
+        <button onclick="closeQuests()" style="background:#333; color:white; width:150px; height:45px; border-radius:15px; margin-top:20px;">НАЗАД В МЕНЮ</button>
+    </div>
+
+    <div id="gameOverlay" class="overlay">
         <div id="gameScore" style="font-size: 32px; font-weight: 900; color: #ffd700; margin-bottom: 10px;">0</div>
         <canvas id="gameCanvas" width="300" height="300"></canvas>
         
-        <!-- УПРАВЛЕНИЕ ЗМЕЙКОЙ -->
         <div class="controls" id="snakeCtrl">
             <div></div><div class="g-btn" ontouchstart="changeDir(0,-10)">▲</div><div></div>
             <div class="g-btn" ontouchstart="changeDir(-10,0)">◀</div><div class="g-btn" ontouchstart="changeDir(0,10)">▼</div><div class="g-btn" ontouchstart="changeDir(10,0)">▶</div>
         </div>
         
-        <!-- УПРАВЛЕНИЕ РАКЕТОЙ -->
         <div class="controls" id="rocketCtrl" style="display:none;">
             <div class="g-btn" ontouchstart="moveRocket(-1)" ontouchend="moveRocket(0)">◀</div>
             <div style="width:75px"></div>
@@ -101,6 +128,14 @@
         const startParam = tg.initDataUnsafe?.start_param?.toString();
         
         let currentPairId = null, globalBalance = 0, currentName = "СИРИЧИК", lastStreakDate = "";
+        let myActivity = { date: "", chest: false, qSnake: false, qRocket: 0 };
+
+        // --- ЗАГРУЗКА ИЗОБРАЖЕНИЙ ДЛЯ РАКЕТЫ ---
+        const rocketImg = new Image();
+        rocketImg.src = 'rocket.png'; // Твоя ракета на GitHub
+
+        const asteroidImg = new Image();
+        asteroidImg.src = 'asteroid.png'; // Твой астероид на GitHub
 
         if (myId) {
             if (startParam && startParam !== myId) {
@@ -117,7 +152,6 @@
                     
                     db.ref(`pairs/${currentPairId}`).on('value', p => {
                         const d = p.val() || {};
-                        
                         globalBalance = d.balance || 0;
                         currentName = d.name || "СИРИЧИК";
                         const currentStreak = d.streak || 0;
@@ -133,21 +167,20 @@
                         if (currentStreak >= 50) stage = 50;
                         document.getElementById('petImg').src = `stage${stage}.png`;
 
-                        // УМНАЯ КНОПКА ОТМЕТОК
                         const todayDate = new Date().toISOString().split('T')[0];
+                        if (d.activity && d.activity[myId]) {
+                            const act = d.activity[myId];
+                            if (act.date === todayDate) myActivity = act;
+                            else myActivity = { date: todayDate, chest: false, qSnake: false, qRocket: 0 };
+                        } else {
+                            myActivity = { date: todayDate, chest: false, qSnake: false, qRocket: 0 };
+                        }
+
                         const myClick = (d.clicks && d.clicks[myId]) ? d.clicks[myId] : "";
                         const btn = document.getElementById('actBtn');
-
-                        if (lastStreakDate === todayDate) {
-                            btn.innerText = "✅ ОТМЕЧЕНО ДО ЗАВТРА";
-                            btn.style.background = "#2c2c2e";
-                        } else if (myClick === todayDate) {
-                            btn.innerText = "⏳ ЖДЕМ НАПАРНИКА";
-                            btn.style.background = "linear-gradient(135deg, #d48806, #ad6800)";
-                        } else {
-                            btn.innerText = "ОТМЕТИТЬСЯ";
-                            btn.style.background = "linear-gradient(135deg, #007aff, #0056b3)";
-                        }
+                        if (lastStreakDate === todayDate) { btn.innerText = "✅ ОТМЕЧЕНО ДО ЗАВТРА"; btn.style.background = "#2c2c2e"; }
+                        else if (myClick === todayDate) { btn.innerText = "⏳ ЖДЕМ НАПАРНИКА"; btn.style.background = "linear-gradient(135deg, #d48806, #ad6800)"; }
+                        else { btn.innerText = "ОТМЕТИТЬСЯ"; btn.style.background = "linear-gradient(135deg, #007aff, #0056b3)"; }
                     });
                 } else {
                     document.getElementById('actBtn').style.display = 'none';
@@ -159,6 +192,39 @@
             });
         }
 
+        function openChest() {
+            if (!currentPairId) return alert("Сначала позови напарника!");
+            const todayDate = new Date().toISOString().split('T')[0];
+            if (myActivity.chest && myActivity.date === todayDate) {
+                return alert("⛔ Ты уже открывал сундук сегодня! Возвращайся завтра.");
+            }
+            const reward = Math.floor(Math.random() * 91) + 10;
+            db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance + reward });
+            db.ref(`pairs/${currentPairId}/activity/${myId}`).update({ chest: true, date: todayDate });
+            tg.HapticFeedback.notificationOccurred('success');
+            alert(`🎁 ВАУ! Из сундука выпало ${reward} RobCoins!`);
+        }
+
+        function showQuests() {
+            if (!currentPairId) return alert("Сначала позови напарника!");
+            document.getElementById('mainUI').style.display = 'none';
+            document.getElementById('questsOverlay').style.display = 'flex';
+            const todayDate = new Date().toISOString().split('T')[0];
+            const isToday = (myActivity.date === todayDate);
+            const q1Done = isToday && myActivity.qSnake;
+            document.getElementById('q1-box').className = q1Done ? "quest-box quest-done" : "quest-box";
+            document.getElementById('q1-prog').innerText = q1Done ? "ВЫПОЛНЕНО ✅" : "0/15 очков";
+            const rPlays = isToday ? (myActivity.qRocket || 0) : 0;
+            const q2Done = rPlays >= 3;
+            document.getElementById('q2-box').className = q2Done ? "quest-box quest-done" : "quest-box";
+            document.getElementById('q2-prog').innerText = q2Done ? "ВЫПОЛНЕНО ✅" : `${rPlays}/3 игр`;
+        }
+
+        function closeQuests() {
+            document.getElementById('questsOverlay').style.display = 'none';
+            document.getElementById('mainUI').style.display = 'flex';
+        }
+
         function inviteFriend() {
             const link = `https://t.me/DailykDuoBot/${shortName}?startapp=${myId}`;
             tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Залетай ко мне в пару! Будем делать рички и играть вместе 🚀`);
@@ -167,61 +233,43 @@
         function renamePet() {
             if (!currentPairId) return;
             const isFirst = (currentName === "СИРИЧИК" || currentName === "НУЖЕН НАПАРНИК");
-            
             if (!isFirst && globalBalance < 50) return alert("❌ Не хватает RobCoins! Нужно 50 💰");
-            
             const newName = prompt(isFirst ? "Первая смена бесплатно! Как назовем?" : "Смена имени стоит 50 монет! Как назовем?", currentName);
-            
             if (newName && newName.trim().length > 0 && newName.length < 15) {
                 const updates = { name: newName.toUpperCase() };
                 if (!isFirst) updates.balance = globalBalance - 50;
                 db.ref(`pairs/${currentPairId}`).update(updates);
                 tg.HapticFeedback.notificationOccurred('success');
-                if (!isFirst) alert("✅ Имя изменено! Списано 50 💰");
             }
         }
 
         function checkIn() {
             if (!currentPairId) return;
             const today = new Date().toISOString().split('T')[0];
-            
-            // Если серия за сегодня уже засчитана - блокируем нажатие
-            if (lastStreakDate === today) {
-                tg.HapticFeedback.notificationOccurred('error');
-                return alert("⛔ Вы уже набили серию за сегодня! Возвращайтесь завтра.");
-            }
-            
+            if (lastStreakDate === today) return alert("⛔ Вы уже набили серию за сегодня!");
             db.ref(`pairs/${currentPairId}/clicks/${myId}`).set(today).then(() => {
                 db.ref(`pairs/${currentPairId}/clicks`).once('value', s => {
-                    const clicks = s.val() || {};
-                    const ids = currentPairId.split('_');
+                    const clicks = s.val() || {}; const ids = currentPairId.split('_');
                     if (clicks[ids[0]] === today && clicks[ids[1]] === today) {
-                        db.ref(`pairs/${currentPairId}`).update({ 
-                            streak: firebase.database.ServerValue.increment(1),
-                            lastStreakDate: today, // Ставим "замок" на сегодняшний день
-                            clicks: { [ids[0]]: "", [ids[1]]: "" }
-                        });
-                        tg.HapticFeedback.notificationOccurred('success');
+                        db.ref(`pairs/${currentPairId}`).update({ streak: firebase.database.ServerValue.increment(1), lastStreakDate: today, clicks: { [ids[0]]: "", [ids[1]]: "" } });
                         alert("🎉 ВЫ ОБА ОТМЕТИЛИСЬ! Серия выросла!");
-                    } else {
-                        tg.HapticFeedback.impactOccurred('heavy');
-                    }
+                    } else { tg.HapticFeedback.impactOccurred('heavy'); }
                 });
             });
         }
 
-        let gameLoop, score, snake, food, dx, dy, player, enemies, rocketDir = 0;
+        let gameLoop, score, snake, food, dx, dy, player, enemies, rocketDir = 0, activeGame = "";
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
         function startGame(type) {
             if (!currentPairId) return alert("Сначала позови напарника!");
+            activeGame = type;
             document.getElementById('mainUI').style.display = 'none';
             document.getElementById('gameOverlay').style.display = 'flex';
             document.getElementById('snakeCtrl').style.display = type === 'snake' ? 'grid' : 'none';
             document.getElementById('rocketCtrl').style.display = type === 'rocket' ? 'grid' : 'none';
             score = 0; document.getElementById('gameScore').innerText = "0";
-            
             if (type === 'snake') { snake = [{x:150,y:150}]; food = {x:80,y:80}; dx=10; dy=0; gameLoop = setInterval(drawSnake, 100); }
             else { player = {x:135, y:260}; enemies = []; gameLoop = setInterval(drawRocket, 20); }
         }
@@ -230,9 +278,9 @@
         
         function drawSnake() {
             const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-            if (head.x<0||head.x>=300||head.y<0||head.y>=300||snake.some(s=>s.x===head.x&&s.y===head.y)) return endGame(score);
+            if (head.x<0||head.x>=300||head.y<0||head.y>=300||snake.some(s=>s.x===head.x&&s.y===head.y)) return endGame(score, 'snake');
             snake.unshift(head);
-            if (head.x===food.x&&head.y===food.y) { score++; food={x:Math.floor(Math.random()*29)*10, y:Math.floor(Math.random()*29)*10}; tg.HapticFeedback.impactOccurred('light'); } else { snake.pop(); }
+            if (head.x===food.x&&head.y===food.y) { score++; food={x:Math.floor(Math.random()*29)*10, y:Math.floor(Math.random()*29)*10}; } else { snake.pop(); }
             ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
             ctx.fillStyle="lime"; snake.forEach(s=>ctx.fillRect(s.x,s.y,9,9)); ctx.fillStyle="red"; ctx.fillRect(food.x,food.y,9,9);
             document.getElementById('gameScore').innerText = score;
@@ -240,37 +288,63 @@
         function changeDir(nx, ny) { if (nx !== -dx && ny !== -dy) { dx = nx; dy = ny; } }
 
         function moveRocket(d) { rocketDir = d; }
+
+        // --- ОБНОВЛЕННАЯ РИСОВКА РАКЕТЫ С КАРТИНКАМИ ---
         function drawRocket() {
             ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
+            
+            // Двигаем игрока
             player.x += rocketDir*5;
             if (player.x<0) player.x=0; if (player.x>270) player.x=270;
-            ctx.fillStyle="#007aff"; ctx.fillRect(player.x, 260, 30, 30);
+            
+            // РИСУЕМ РАКЕТУ (вместо ctx.fillRect)
+            ctx.drawImage(rocketImg, player.x, 260, 30, 30);
+            
+            // Генерация астероидов
             if (Math.random()<0.06) enemies.push({x:Math.random()*280, y:-20, s:3+Math.random()*4});
+            
             enemies.forEach((en, i) => {
-                en.y += en.s; ctx.fillStyle="orange"; ctx.beginPath(); ctx.arc(en.x,en.y,8,0,7); ctx.fill();
-                if (en.y>260 && en.y<290 && en.x>player.x && en.x<player.x+30) return endGame(Math.floor(score/5));
+                en.y += en.s; 
+                
+                // РИСУЕМ АСТЕРОИД (вместо ctx.arc)
+                ctx.drawImage(asteroidImg, en.x - 8, en.y - 8, 16, 16); // -8 для центрирования
+                
+                // Проверка столкновения
+                if (en.y>260 && en.y<290 && en.x>player.x && en.x<player.x+30) return endGame(Math.floor(score/5), 'rocket');
+                
+                // Пролет мимо
                 if (en.y>300) { enemies.splice(i,1); score++; document.getElementById('gameScore').innerText = score; }
             });
         }
 
-        function endGame(reward) {
+        function endGame(reward, type) {
             clearInterval(gameLoop);
-            db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance + reward });
+            const todayDate = new Date().toISOString().split('T')[0];
+            let qUpdates = {};
+            let questMessage = "";
+            let questReward = 0;
+            const isToday = (myActivity.date === todayDate);
+            if (type === 'snake' && score >= 15 && (!isToday || !myActivity.qSnake)) {
+                qUpdates['qSnake'] = true;
+                questMessage = "\n🎯 КВЕСТ ВЫПОЛНЕН: Змейка-Про! +50 💰";
+                questReward = 50;
+            }
+            let rPlays = isToday ? (myActivity.qRocket || 0) : 0;
+            if (type === 'rocket' && rPlays < 3) {
+                rPlays++; qUpdates['qRocket'] = rPlays;
+                if (rPlays === 3) { questMessage = "\n🎯 КВЕСТ ВЫПОЛНЕН: Космонавт! +50 💰"; questReward = 50; }
+            }
+            if (Object.keys(qUpdates).length > 0) {
+                qUpdates['date'] = todayDate;
+                db.ref(`pairs/${currentPairId}/activity/${myId}`).update(qUpdates);
+            }
+            db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance + reward + questReward });
             tg.HapticFeedback.notificationOccurred('success');
-            alert("ФИНИШ! 🏆 Начислено: " + reward + " RobCoins");
+            alert(`ФИНИШ! Начислено: ${reward} RobCoins` + questMessage);
             exitGame();
         }
 
-        function deletePair() { 
-            if (confirm("💀 УВЕРЕН? Это сотрет ВСЮ серию и ВСЕ монеты навсегда!")) { 
-                const ids = currentPairId.split('_');
-                const pId = ids[0] === myId ? ids[1] : ids[0];
-                db.ref('users/'+myId+'/partner').remove(); 
-                db.ref('users/'+pId+'/partner').remove(); 
-                db.ref('pairs/'+currentPairId).remove(); 
-                location.reload(); 
-            } 
-        }
+        function deletePair() { if (confirm("УДАЛИТЬ ВСЁ?")) { const ids = currentPairId.split('_'); const pId = ids[0] === myId ? ids[1] : ids[0]; db.ref('users/'+myId+'/partner').remove(); db.ref('users/'+pId+'/partner').remove(); db.ref('pairs/'+currentPairId).remove(); location.reload(); } }
     </script>
 </body>
 </html>
