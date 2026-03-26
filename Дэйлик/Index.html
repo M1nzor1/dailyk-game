@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Daily Streak Duo: Shop & Library</title>
+    <title>Daily Streak Duo: Custom Coins</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
@@ -11,7 +11,7 @@
         body { background: #0f0f11; color: white; font-family: -apple-system, sans-serif; margin: 0; text-align: center; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
         .container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; max-width: 380px; height: 95vh; justify-content: space-between; padding: 10px 0; }
         
-        #balance-box { background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(0,0,0,0.6)); padding: 6px 20px; border-radius: 20px; font-weight: 900; color: #ffd700; border: 1px solid #ffd700; font-size: 16px; box-shadow: 0 0 15px rgba(255,215,0,0.1); }
+        #balance-box { background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(0,0,0,0.6)); padding: 6px 20px; border-radius: 20px; font-weight: 900; color: #ffd700; border: 1px solid #ffd700; font-size: 16px; box-shadow: 0 0 15px rgba(255,215,0,0.1); display: flex; align-items: center; gap: 5px; justify-content: center; }
         #streak { font-size: 60px; font-weight: 900; color: #ff4500; line-height: 0.8; margin-top: 5px; }
         
         #mid-block { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
@@ -27,16 +27,18 @@
         
         .btn-game { height: 65px; background: #1c1c1e; color: #ffd700; border: 1px solid #333; font-size: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
         .btn-game span { font-size: 20px; }
-        .btn-game img { width: 25px; height: 25px; object-fit: contain; } /* СТИЛЬ ДЛЯ ТВОИХ ИКОНОК */
+        .btn-game img { width: 25px; height: 25px; object-fit: contain; }
         
         .btn-bonus { background: linear-gradient(135deg, #8a2be2, #4b0082); color: white; border: 1px solid #9932cc; }
         .btn-quest { background: linear-gradient(135deg, #ff4500, #b22222); color: white; border: 1px solid #ff6347; }
         
-        /* НОВЫЕ КНОПКИ */
         .btn-shop { background: linear-gradient(135deg, #ffd700, #b8860b); color: black; border: 1px solid #daa520; font-size: 11px; font-weight: 900;}
         .btn-lib { background: linear-gradient(135deg, #007aff, #0056b3); color: white; border: 1px solid #004080; font-size: 11px; font-weight: 900;}
         
         #delBtn { background: transparent; color: #444; font-size: 10px; text-decoration: underline; margin-top: 5px; }
+
+        /* ИКОНКА МОНЕТКИ */
+        .coin-icon { width: 16px; height: 16px; vertical-align: middle; margin-top: -2px; object-fit: contain; }
 
         /* ЭКРАНЫ */
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0f11; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
@@ -47,8 +49,8 @@
         /* КВЕСТЫ */
         .quest-box { background: #1c1c1e; border: 1px solid #333; width: 85%; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: left; }
         .quest-title { font-size: 14px; font-weight: bold; color: #fff; margin-bottom: 5px; }
-        .quest-reward { font-size: 12px; color: #ffd700; font-weight: bold; }
-        .quest-progress { font-size: 12px; color: #888; float: right; }
+        .quest-reward { font-size: 12px; color: #ffd700; font-weight: bold; display: flex; align-items: center; gap: 4px; }
+        .quest-progress { font-size: 12px; color: #888; float: right; margin-left: auto; }
         .quest-done { border-color: #34c759; background: rgba(52,199,89,0.1); }
 
         /* МАГАЗИН И ПАК */
@@ -75,14 +77,19 @@
 
     <div class="container" id="mainUI">
         <div id="top">
-            <div id="balance-box">💰 <span id="balance">0</span> RobCoins</div>
+            <div id="balance-box">
+                <img src="coin.png" class="coin-icon" alt="💰" onerror="this.style.display='none'"> 
+                <span id="balance">0</span> RobCoins
+            </div>
             <div id="streak">0</div>
             <div style="font-size: 10px; color: #888; font-weight: bold;">ДНЕЙ ВМЕСТЕ</div>
         </div>
 
         <div id="mid-block">
             <div id="name" onclick="renamePet()">СИРИЧИК</div>
-            <div style="font-size: 9px; color: #ffd700; margin-bottom: 5px;">(смена: 50 💰)</div>
+            <div style="font-size: 9px; color: #ffd700; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 3px;">
+                (смена: 50 <img src="coin.png" class="coin-icon" onerror="this.style.display='none'">)
+            </div>
             <img id="petImg" src="stage0.png">
         </div>
 
@@ -90,20 +97,17 @@
             <button id="actBtn" class="btn-check" onclick="checkIn()" style="display:none; margin: 0 auto;">ОТМЕТИТЬСЯ</button>
             <button id="invBtn" class="btn-invite" onclick="inviteFriend()" style="display:none; margin: 0 auto;">ПОЗВАТЬ НАПАРНИКА 🤝</button>
 
-            <!-- СЕТКА КНОПОК -->
             <div class="menu-grid" style="margin: 10px auto;">
                 <button class="btn-game" onclick="startGame('snake')"><span>🐍</span>ЗМЕЙКА</button>
                 <button class="btn-game" onclick="startGame('rocket')"><span>🚀</span>РАКЕТА</button>
                 <button class="btn-game btn-bonus" onclick="openChest()"><span>🎁</span>СУНДУК</button>
                 <button class="btn-game btn-quest" onclick="showQuests()"><span>🎯</span>КВЕСТЫ</button>
                 
-                <!-- НОВАЯ КНОПКА МАГАЗИНА (загрузи shop_icon.png на гитхаб) -->
                 <button class="btn-game btn-shop" onclick="showShop()">
                     <img src="shop_icon.png" alt="Шоп" onerror="this.style.display='none'">
                     МАГАЗИН
                 </button>
                 
-                <!-- НОВАЯ КНОПКА БИБЛИОТЕКИ (загрузи lib_icon.png на гитхаб) -->
                 <button class="btn-game btn-lib" onclick="showLibrary()">
                     <img src="lib_icon.png" alt="Книги" onerror="this.style.display='none'">
                     КОЛЛЕКЦИЯ
@@ -116,11 +120,16 @@
     <!-- ОКНО МАГАЗИНА -->
     <div id="shopOverlay" class="overlay">
         <h2 style="color: #ffd700; margin-top: 10px;">МАГАЗИН ПАКОВ</h2>
-        <div style="color: #888; font-size: 14px; margin-bottom: 25px;">Твой баланс: <b style="color:#ffd700;"><span id="shopBalance">0</span> 💰</b></div>
+        <div style="color: #888; font-size: 14px; margin-bottom: 25px; display: flex; align-items: center; gap: 5px;">
+            Твой баланс: <b style="color:#ffd700;"><span id="shopBalance">0</span></b>
+            <img src="coin.png" class="coin-icon" onerror="this.style.display='none'">
+        </div>
         
         <div id="packContainer" onclick="buyPack()">
             <img src="pack.png" alt="Упаковка" style="height: 120px; object-fit: contain;">
-            <div style="font-weight: bold; margin-top: 15px; font-size: 18px;">ОТКРЫТЬ (100 💰)</div>
+            <div style="font-weight: bold; margin-top: 15px; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                ОТКРЫТЬ (100 <img src="coin.png" class="coin-icon" onerror="this.style.display='none'">)
+            </div>
         </div>
 
         <button onclick="closeMenu('shopOverlay')" style="background:#333; color:white; width:150px; height:45px; border-radius:15px; margin-top:30px;">НАЗАД</button>
@@ -131,9 +140,7 @@
         <h2 style="color: #007aff; margin-top: 10px; margin-bottom: 5px;">КОЛЛЕКЦИЯ</h2>
         <div style="color: #888; font-size: 12px; margin-bottom: 15px;">Собери их всех!</div>
         
-        <div class="card-grid" id="cardGrid">
-            <!-- Карточки генерируются скриптом -->
-        </div>
+        <div class="card-grid" id="cardGrid"></div>
 
         <button onclick="closeMenu('libraryOverlay')" style="background:#333; color:white; width:150px; height:45px; border-radius:15px; margin-top:20px;">НАЗАД</button>
     </div>
@@ -152,11 +159,17 @@
         <h2 style="color: #ff4500;">🎯 ЕЖЕДНЕВНЫЕ КВЕСТЫ</h2>
         <div class="quest-box" id="q1-box">
             <div class="quest-title">🐍 Змейка-Про</div>
-            <div class="quest-reward">Награда: 50 💰 <span class="quest-progress" id="q1-prog">0/15 очков</span></div>
+            <div class="quest-reward">
+                Награда: 50 <img src="coin.png" class="coin-icon" onerror="this.style.display='none'">
+                <span class="quest-progress" id="q1-prog">0/15 очков</span>
+            </div>
         </div>
         <div class="quest-box" id="q2-box">
             <div class="quest-title">🚀 Космонавт</div>
-            <div class="quest-reward">Награда: 50 💰 <span class="quest-progress" id="q2-prog">0/3 игр</span></div>
+            <div class="quest-reward">
+                Награда: 50 <img src="coin.png" class="coin-icon" onerror="this.style.display='none'">
+                <span class="quest-progress" id="q2-prog">0/3 игр</span>
+            </div>
         </div>
         <button onclick="closeMenu('questsOverlay')" style="background:#333; color:white; width:150px; height:45px; border-radius:15px; margin-top:20px;">НАЗАД</button>
     </div>
@@ -239,7 +252,7 @@
                         myCards = d.cards || {}; 
                         
                         document.getElementById('balance').innerText = globalBalance;
-                        document.getElementById('shopBalance').innerText = globalBalance; // ОБНОВЛЯЕМ В МАГАЗИНЕ
+                        document.getElementById('shopBalance').innerText = globalBalance; 
                         document.getElementById('streak').innerText = currentStreak;
                         document.getElementById('name').innerText = currentName;
                         
@@ -276,7 +289,6 @@
             });
         }
 
-        // --- МАГАЗИН И КОЛЛЕКЦИЯ ---
         function showShop() {
             if (!currentPairId) return alert("Сначала позови напарника!");
             document.getElementById('mainUI').style.display = 'none';
@@ -341,7 +353,6 @@
         function closePopup() { document.getElementById('cardPopup').style.display = 'none'; }
         function closeMenu(id) { document.getElementById(id).style.display = 'none'; document.getElementById('mainUI').style.display = 'flex'; }
 
-        // --- КВЕСТЫ, СУНДУК И ОСТАЛЬНОЕ ---
         function openChest() {
             if (!currentPairId) return alert("Сначала позови напарника!");
             const todayDate = new Date().toISOString().split('T')[0];
@@ -397,7 +408,6 @@
             });
         }
 
-        // --- ИГРЫ ---
         let gameLoop, score, snake, food, dx, dy, player, enemies, rocketDir = 0;
         const canvas = document.getElementById("gameCanvas"); const ctx = canvas.getContext("2d");
 
