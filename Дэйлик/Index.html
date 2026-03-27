@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Daily Streak Duo: Custom Cards</title>
+    <title>ROBIK: Robo-Raid</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
@@ -22,36 +22,20 @@
         button { border-radius: 15px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
         button:active { transform: scale(0.95); }
         
-        .btn-check { width: 90%; height: 50px; background: linear-gradient(135deg, #007aff, #0056b3); color: white; font-size: 15px; box-shadow: 0 4px 15px rgba(0,122,255,0.3); }
-        .btn-invite { width: 90%; height: 50px; background: linear-gradient(135deg, #34c759, #248a3d); color: white; font-size: 15px; box-shadow: 0 4px 15px rgba(52,199,89,0.3); }
+        .btn-check { width: 90%; height: 50px; background: linear-gradient(135deg, #007aff, #0056b3); color: white; font-size: 15px; }
+        .btn-invite { width: 90%; height: 50px; background: linear-gradient(135deg, #34c759, #248a3d); color: white; font-size: 15px; }
         
         .btn-game { height: 65px; background: #1c1c1e; color: #ffd700; border: 1px solid #333; font-size: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
         .btn-game span { font-size: 20px; }
-        .btn-game img { width: 25px; height: 25px; object-fit: contain; }
         
-        .btn-bonus { background: linear-gradient(135deg, #8a2be2, #4b0082); color: white; border: 1px solid #9932cc; }
-        .btn-quest { background: linear-gradient(135deg, #ff4500, #b22222); color: white; border: 1px solid #ff6347; }
-        
-        .btn-shop { background: linear-gradient(135deg, #ffd700, #b8860b); color: black; border: 1px solid #daa520; font-size: 11px; font-weight: 900;}
-        .btn-lib { background: linear-gradient(135deg, #007aff, #0056b3); color: white; border: 1px solid #004080; font-size: 11px; font-weight: 900;}
-        
-        #delBtn { background: transparent; color: #444; font-size: 10px; text-decoration: underline; margin-top: 5px; }
-
-        .coin-icon { width: 30px; height: 30px; vertical-align: middle; margin-top: -2px; object-fit: contain; }
+        .btn-raid { background: linear-gradient(135deg, #ff4500, #ff8c00); color: white; grid-column: span 2; height: 55px; font-size: 14px; border: 1px solid #fff; margin-bottom: 5px;}
 
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0f11; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
-        canvas { background: #050505; border: 2px solid #333; border-radius: 15px; }
-        .controls { display: grid; grid-template-columns: repeat(3, 75px); gap: 12px; margin-top: 20px; }
-        .g-btn { width: 75px; height: 75px; background: #2c2c2e; border-radius: 20px; color: white; font-size: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid #444; }
-
-        .quest-box { background: #1c1c1e; border: 1px solid #333; width: 85%; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: left; }
-        .quest-title { font-size: 14px; font-weight: bold; color: #fff; margin-bottom: 5px; }
-        .quest-reward { font-size: 12px; color: #ffd700; font-weight: bold; display: flex; align-items: center; gap: 4px; }
-        .quest-progress { font-size: 12px; color: #888; float: right; margin-left: auto; }
-        .quest-done { border-color: #34c759; background: rgba(52,199,89,0.1); }
-
-        #packContainer { background: #1c1c1e; padding: 20px; border-radius: 20px; border: 2px dashed #ffd700; cursor: pointer; margin-bottom: 15px; transition: transform 0.2s; width: 80%; }
-        #packContainer:active { transform: scale(0.9); }
+        
+        /* РЕЙД ИНТЕРФЕЙС */
+        .raid-card-box { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; width: 95%; margin: 20px 0; }
+        .raid-card { aspect-ratio: 2/3; background: #2c2c2e; border: 2px solid #444; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .raid-info { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; width: 80%; margin-bottom: 10px; }
         
         .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 90%; max-height: 50vh; overflow-y: auto; padding: 10px; }
         .card-item { width: 100%; aspect-ratio: 3/4; background: #222; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555; background-size: cover; background-position: center; position: relative; }
@@ -65,6 +49,7 @@
         
         #cardPopup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; flex-direction: column; align-items: center; justify-content: center; }
         #popupImg { width: 60vw; max-width: 250px; aspect-ratio: 3/4; border-radius: 10px; background: #222; background-size: cover; background-position: center; }
+        .coin-icon { width: 25px; height: 25px; vertical-align: middle; }
     </style>
 </head>
 <body>
@@ -72,7 +57,7 @@
     <div class="container" id="mainUI">
         <div id="top">
             <div id="balance-box">
-                <img src="coin1.png" class="coin-icon" alt="💰" onerror="this.style.display='none'"> 
+                <img src="coin1.png" class="coin-icon" alt="💰"> 
                 <span id="balance">0</span> RobCoins
             </div>
             <div id="streak">0</div>
@@ -81,114 +66,66 @@
 
         <div id="mid-block">
             <div id="name" onclick="renamePet()">СИРИЧИК</div>
-            <div style="font-size: 9px; color: #ffd700; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 3px;">
-                (смена: 50 <img src="coin1.png" class="coin-icon" onerror="this.style.display='none'">)
-            </div>
             <img id="petImg" src="stage0.png">
         </div>
 
         <div id="bottom" style="width: 100%;">
-            <button id="actBtn" class="btn-check" onclick="checkIn()" style="display:none; margin: 0 auto;">ОТМЕТИТЬСЯ</button>
-            <button id="invBtn" class="btn-invite" onclick="inviteFriend()" style="display:none; margin: 0 auto;">ПОЗВАТЬ НАПАРНИКА 🤝</button>
-
-            <div class="menu-grid" style="margin: 10px auto;">
+            <button class="btn-game btn-raid" onclick="startRaid()">🔥 ВЫЛАЗКА (20 💰) 🔥</button>
+            <div class="menu-grid">
                 <button class="btn-game" onclick="startGame('snake')"><span>🐍</span>ЗМЕЙКА</button>
                 <button class="btn-game" onclick="startGame('rocket')"><span>🚀</span>РАКЕТА</button>
-                <button class="btn-game btn-bonus" onclick="openChest()"><span>🎁</span>СУНДУК</button>
-                <button class="btn-game btn-quest" onclick="showQuests()"><span>🎯</span>КВЕСТЫ</button>
-                
-                <button class="btn-game btn-shop" onclick="showShop()">
-                    <img src="shop_icon.png" alt="Шоп" onerror="this.style.display='none'">
-                    МАГАЗИН
-                </button>
-                
-                <button class="btn-game btn-lib" onclick="showLibrary()">
-                    <img src="lib_icon.png" alt="Книги" onerror="this.style.display='none'">
-                    КОЛЛЕКЦИЯ
-                </button>
+                <button class="btn-game" onclick="showShop()"><span>🛒</span>МАГАЗИН</button>
+                <button class="btn-game" onclick="showLibrary()"><span>🗂</span>КОЛЛЕКЦИЯ</button>
             </div>
-            <button id="delBtn" onclick="deletePair()">разорвать пару</button>
+            <button id="actBtn" class="btn-check" onclick="checkIn()" style="display:none; margin: 10px auto;">ОТМЕТИТЬСЯ</button>
+            <button id="invBtn" class="btn-invite" onclick="inviteFriend()" style="display:none; margin: 10px auto;">ПОЗВАТЬ ДРУГА</button>
         </div>
     </div>
 
-    <!-- ОКНО МАГАЗИНА -->
+    <!-- ОКНО РЕЙДА -->
+    <div id="raidOverlay" class="overlay">
+        <h2 style="color: #ff4500; margin: 0;">ЭТАЖ: <span id="raidFloor">1</span>/20</h2>
+        <div class="raid-info">
+            <div style="font-size: 14px; color: #888;">В СЕЙФЕ:</div>
+            <div style="font-size: 20px; color: #ffd700; font-weight: bold;">
+                <span id="raidBankCoins">0</span> 💰 | <span id="raidBankCards">0</span> 🎴
+            </div>
+        </div>
+        <div class="raid-card-box">
+            <div class="raid-card" onclick="chooseRaidCard()">❓</div>
+            <div class="raid-card" onclick="chooseRaidCard()">❓</div>
+            <div class="raid-card" onclick="chooseRaidCard()">❓</div>
+            <div class="raid-card" onclick="chooseRaidCard()">❓</div>
+            <div class="raid-card" onclick="chooseRaidCard()">❓</div>
+        </div>
+        <p style="font-size: 12px; color: #666;">Найди монеты или робота, но не попадись на ЛОМ!</p>
+        <button onclick="endRaid(true)" style="background:#34c759; color:white; width:200px; height:50px; border-radius:15px; margin-top:10px; font-weight:bold;">💰 СБЕЖАТЬ И ЗАБРАТЬ</button>
+    </div>
+
+    <!-- ДРУГИЕ ОКНА (МАГАЗИН, КОЛЛЕКЦИЯ И Т.Д.) -->
     <div id="shopOverlay" class="overlay">
-        <h2 style="color: #ffd700; margin-top: 10px;">МАГАЗИН ПАКОВ</h2>
-        <div style="color: #888; font-size: 14px; margin-bottom: 25px; display: flex; align-items: center; gap: 5px;">
-            Твой баланс: <b style="color:#ffd700;"><span id="shopBalance">0</span></b>
-            <img src="coin1.png" class="coin-icon" onerror="this.style.display='none'">
+        <h2 style="color: #ffd700;">МАГАЗИН</h2>
+        <div id="packContainer" onclick="buyPack()" style="border:2px dashed #ffd700; padding:20px; border-radius:20px;">
+            <img src="pack1.png" style="height:100px;"><br>ОТКРЫТЬ ПАК (100 💰)
         </div>
-        
-        <div id="packContainer" onclick="buyPack()">
-            <img src="pack1.png" alt="Упаковка" style="height: 120px; object-fit: contain;">
-            <div style="font-weight: bold; margin-top: 15px; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 5px;">
-                ОТКРЫТЬ (100 <img src="coin1.png" class="coin-icon" onerror="this.style.display='none'">)
-            </div>
-        </div>
-
-        <button onclick="closeMenu('shopOverlay')" style="background:#333; color:white; width:150px; height:45px; border-radius:15px; margin-top:30px;">НАЗАД</button>
+        <button onclick="closeMenu('shopOverlay')" style="margin-top:20px;">НАЗАД</button>
     </div>
 
-    <!-- ОКНО БИБЛИОТЕКИ -->
     <div id="libraryOverlay" class="overlay">
-        <h2 style="color: #007aff; margin-top: 10px; margin-bottom: 5px;">КОЛЛЕКЦИЯ</h2>
-        <div style="color: #888; font-size: 12px; margin-bottom: 15px;">Собери их всех!</div>
-        
+        <h2>КОЛЛЕКЦИЯ</h2>
         <div class="card-grid" id="cardGrid"></div>
-
-        <button onclick="closeMenu('libraryOverlay')" style="background:#333; color:white; width:150px; height:45px; border-radius:15px; margin-top:20px;">НАЗАД</button>
+        <button onclick="closeMenu('libraryOverlay')" style="margin-top:20px;">НАЗАД</button>
     </div>
 
-    <!-- ПОПАП ВЫПАВШЕЙ КАРТЫ / МОНЕТ -->
     <div id="cardPopup" onclick="closePopup()">
-        <h1 id="popupRarity" style="color: white; margin-bottom: 20px; text-transform: uppercase;">ВЫПАЛО!</h1>
+        <h1 id="popupRarity">ВЫПАЛО!</h1>
         <div id="popupImg"></div>
-        <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; margin-top: 20px;">
-            <p style="color: white; font-weight: bold; margin: 0;">ТАПНИ, ЧТОБЫ ЗАКРЫТЬ</p>
-        </div>
-    </div>
-
-    <!-- КВЕСТЫ -->
-    <div id="questsOverlay" class="overlay">
-        <h2 style="color: #ff4500;">🎯 ЕЖЕДНЕВНЫЕ КВЕСТЫ</h2>
-        <div class="quest-box" id="q1-box">
-            <div class="quest-title">🐍 Змейка-Про</div>
-            <div class="quest-reward">
-                Награда: 50 <img src="coin1.png" class="coin-icon" onerror="this.style.display='none'">
-                <span class="quest-progress" id="q1-prog">0/15 очков</span>
-            </div>
-        </div>
-        <div class="quest-box" id="q2-box">
-            <div class="quest-title">🚀 Космонавт</div>
-            <div class="quest-reward">
-                Награда: 50 <img src="coin1.png" class="coin-icon" onerror="this.style.display='none'">
-                <span class="quest-progress" id="q2-prog">0/3 игр</span>
-            </div>
-        </div>
-        <button onclick="closeMenu('questsOverlay')" style="background:#333; color:white; width:150px; height:45px; border-radius:15px; margin-top:20px;">НАЗАД</button>
-    </div>
-
-    <!-- ИГРЫ -->
-    <div id="gameOverlay" class="overlay">
-        <div id="gameScore" style="font-size: 32px; font-weight: 900; color: #ffd700; margin-bottom: 10px;">0</div>
-        <canvas id="gameCanvas" width="300" height="300"></canvas>
-        <div class="controls" id="snakeCtrl">
-            <div></div><div class="g-btn" ontouchstart="changeDir(0,-10)">▲</div><div></div>
-            <div class="g-btn" ontouchstart="changeDir(-10,0)">◀</div><div class="g-btn" ontouchstart="changeDir(0,10)">▼</div><div class="g-btn" ontouchstart="changeDir(10,0)">▶</div>
-        </div>
-        <div class="controls" id="rocketCtrl" style="display:none;">
-            <div class="g-btn" ontouchstart="moveRocket(-1)" ontouchend="moveRocket(0)">◀</div>
-            <div style="width:75px"></div>
-            <div class="g-btn" ontouchstart="moveRocket(1)" ontouchend="moveRocket(0)">▶</div>
-        </div>
-        <button onclick="exitGame()" style="background:#ff3b30; color:white; width:120px; height:45px; border-radius:15px; margin-top:25px; font-weight:bold;">ВЫЙТИ</button>
     </div>
 
     <script>
         const shortName = "seriychik"; 
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.setHeaderColor('#0f0f11');
 
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
@@ -200,283 +137,143 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const myId = tg.initDataUnsafe?.user?.id?.toString();
-        const startParam = tg.initDataUnsafe?.start_param?.toString();
         
-        let currentPairId = null, globalBalance = 0, currentName = "СИРИЧИК", lastStreakDate = "";
-        let myActivity = { date: "", chest: false, qSnake: false, qRocket: 0 };
+        let currentPairId = null, globalBalance = 0, currentName = "СИРИЧИК";
         let myCards = {};
+        let raidData = { floor: 1, bankCoins: 0, bankCards: [] };
 
         const cardDB = [
-            { id: "unc1", img: "unc1.png", rare: "unc", name: "Обычная 1" },
-            { id: "unc2", img: "unc2.png", rare: "unc", name: "Обычная 2" },
-            { id: "unc3", img: "unc3.png", rare: "unc", name: "Обычная 3" },
-            { id: "rar1", img: "rar1.png", rare: "rar", name: "Редкая 1" },
-            { id: "rar2", img: "rar2.png", rare: "rar", name: "Редкая 2" },
-            { id: "rar3", img: "rar3.png", rare: "rar", name: "Редкая 3" },
-            { id: "epi1", img: "epi1.png", rare: "epi", name: "Эпик 1" },
-            { id: "epi2", img: "epi2.png", rare: "epi", name: "Эпик 2" },
-            { id: "epi3", img: "epi3.png", rare: "epi", name: "Эпик 3" },
-            { id: "leg1", img: "leg1.png", rare: "leg", name: "Лега 1" },
-            { id: "leg2", img: "leg2.png", rare: "leg", name: "Лега 2" },
-            { id: "leg3", img: "leg3.png", rare: "leg", name: "Лега 3" }
+            { id: "unc1", img: "unc1.png", rare: "unc" }, { id: "unc2", img: "unc2.png", rare: "unc" }, { id: "unc3", img: "unc3.png", rare: "unc" },
+            { id: "rar1", img: "rar1.png", rare: "rar" }, { id: "rar2", img: "rar2.png", rare: "rar" }, { id: "rar3", img: "rar3.png", rare: "rar" },
+            { id: "epi1", img: "epi1.png", rare: "epi" }, { id: "epi2", img: "epi2.png", rare: "epi" }, { id: "epi3", img: "epi3.png", rare: "epi" },
+            { id: "leg1", img: "leg1.png", rare: "leg" }, { id: "leg2", img: "leg2.png", rare: "leg" }, { id: "leg3", img: "leg3.png", rare: "leg" },
+            { id: "fail", img: "fail.png", rare: "fail" } // КАРТА ПРОИГРЫША
         ];
 
-        const rocketImg = new Image(); rocketImg.src = 'rocket.png';
-        const asteroidImg = new Image(); asteroidImg.src = 'asteroid.png';
+        // --- ЛОГИКА ВЫЛАЗКИ ---
+        function startRaid() {
+            if (globalBalance < 20) return alert("Нужно 20 монет!");
+            db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance - 20 });
+            raidData = { floor: 1, bankCoins: 0, bankCards: [] };
+            updateRaidUI();
+            document.getElementById('mainUI').style.display = 'none';
+            document.getElementById('raidOverlay').style.display = 'flex';
+        }
 
-        if (myId) {
-            if (startParam && startParam !== myId) {
-                db.ref('users/' + myId).update({ partner: startParam });
-                db.ref('users/' + startParam).update({ partner: myId });
+        function chooseRaidCard() {
+            const chance = Math.random() * 100;
+            tg.HapticFeedback.impactOccurred('medium');
+
+            if (chance < 20) { // 20% шанс проиграть
+                alert("💥 БА-БАХ! Ты попал на СЛОМАННОГО РОБОТА!");
+                showPopup("ЛОМ! ТЫ ВСЁ ПОТЕРЯЛ", "fail.png", "fail");
+                endRaid(false);
+            } else if (chance < 35) { // 15% шанс найти карту
+                const randomCard = cardDB[Math.floor(Math.random() * (cardDB.length - 1))];
+                raidData.bankCards.push(randomCard.id);
+                alert(`📦 Нашел карту: ${randomCard.id}! Она в сейфе.`);
+                nextFloor();
+            } else { // 65% шанс найти монеты
+                const win = Math.floor(Math.random() * 40) + 10;
+                raidData.bankCoins += win;
+                nextFloor();
             }
+        }
 
+        function nextFloor() {
+            if (raidData.floor >= 20) {
+                alert("🏆 ТЫ ПРОШЕЛ ВСЕ 20 ЭТАЖЕЙ! ПОБЕДА!");
+                endRaid(true);
+            } else {
+                raidData.floor++;
+                updateRaidUI();
+            }
+        }
+
+        function updateRaidUI() {
+            document.getElementById('raidFloor').innerText = raidData.floor;
+            document.getElementById('raidBankCoins').innerText = raidData.bankCoins;
+            document.getElementById('raidBankCards').innerText = raidData.bankCards.length;
+        }
+
+        function endRaid(isWin) {
+            if (isWin) {
+                let updates = { balance: globalBalance + raidData.bankCoins };
+                raidData.bankCards.forEach(cardId => {
+                    myCards[cardId] = (myCards[cardId] || 0) + 1;
+                });
+                updates['cards'] = myCards;
+                db.ref(`pairs/${currentPairId}`).update(updates);
+                alert(`💰 Ты вынес из рейда ${raidData.bankCoins} монет и ${raidData.bankCards.length} карт!`);
+            }
+            document.getElementById('raidOverlay').style.display = 'none';
+            document.getElementById('mainUI').style.display = 'flex';
+        }
+
+        // --- СТАНДАРТНЫЕ ФУНКЦИИ ---
+        if (myId) {
             db.ref('users/' + myId + '/partner').on('value', snap => {
                 const pId = snap.val();
                 if (pId) {
-                    document.getElementById('actBtn').style.display = 'block';
-                    document.getElementById('invBtn').style.display = 'none';
                     currentPairId = myId < pId ? `${myId}_${pId}` : `${pId}_${myId}`;
-                    
                     db.ref(`pairs/${currentPairId}`).on('value', p => {
                         const d = p.val() || {};
                         globalBalance = d.balance || 0;
                         currentName = d.name || "СИРИЧИК";
-                        const currentStreak = d.streak || 0;
-                        lastStreakDate = d.lastStreakDate || "";
-                        myCards = d.cards || {}; 
-                        
+                        myCards = d.cards || {};
                         document.getElementById('balance').innerText = globalBalance;
-                        document.getElementById('shopBalance').innerText = globalBalance; 
-                        document.getElementById('streak').innerText = currentStreak;
+                        document.getElementById('streak').innerText = d.streak || 0;
                         document.getElementById('name').innerText = currentName;
-                        
-                        let stage = 0;
-                        if (currentStreak >= 10) stage = 10;
-                        if (currentStreak >= 20) stage = 20;
-                        if (currentStreak >= 50) stage = 50;
-                        document.getElementById('petImg').src = `stage${stage}.png`;
-
-                        const todayDate = new Date().toISOString().split('T')[0];
-                        if (d.activity && d.activity[myId]) {
-                            const act = d.activity[myId];
-                            if (act.date === todayDate) myActivity = act;
-                            else myActivity = { date: todayDate, chest: false, qSnake: false, qRocket: 0 };
-                        } else {
-                            myActivity = { date: todayDate, chest: false, qSnake: false, qRocket: 0 };
-                        }
-
-                        const myClick = (d.clicks && d.clicks[myId]) ? d.clicks[myId] : "";
-                        const btn = document.getElementById('actBtn');
-                        if (lastStreakDate === todayDate) { btn.innerText = "✅ ОТМЕЧЕНО"; btn.style.background = "#2c2c2e"; }
-                        else if (myClick === todayDate) { btn.innerText = "⏳ ЖДЕМ ДРУГА"; btn.style.background = "linear-gradient(135deg, #d48806, #ad6800)"; }
-                        else { btn.innerText = "ОТМЕТИТЬСЯ"; btn.style.background = "linear-gradient(135deg, #007aff, #0056b3)"; }
-                        
-                        renderCards();
+                        document.getElementById('actBtn').style.display = 'block';
                     });
                 } else {
-                    document.getElementById('actBtn').style.display = 'none';
                     document.getElementById('invBtn').style.display = 'block';
-                    document.getElementById('streak').innerText = "0";
-                    document.getElementById('balance').innerText = "0";
-                    document.getElementById('name').innerText = "НУЖЕН НАПАРНИК";
                 }
             });
         }
 
-        function showShop() {
-            if (!currentPairId) return alert("Сначала позови напарника!");
-            document.getElementById('mainUI').style.display = 'none';
-            document.getElementById('shopOverlay').style.display = 'flex';
+        function showPopup(text, img, rarity) {
+            const pR = document.getElementById('popupRarity');
+            const pI = document.getElementById('popupImg');
+            pR.innerText = text;
+            pI.style.backgroundImage = `url('${img}')`;
+            pI.className = rarity;
+            document.getElementById('cardPopup').style.display = 'flex';
         }
 
-        function showLibrary() {
-            if (!currentPairId) return alert("Сначала позови напарника!");
-            document.getElementById('mainUI').style.display = 'none';
-            document.getElementById('libraryOverlay').style.display = 'flex';
-            renderCards();
+        function buyPack() {
+            if (globalBalance < 100) return alert("Мало монет!");
+            const rand = Math.random() * 100;
+            if (rand < 40) {
+                const coins = Math.floor(Math.random() * 91) + 10;
+                db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance - 100 + coins });
+                showPopup(`ВЫПАЛО ${coins} МОНЕТ!`, "coin1.png", "unc");
+            } else {
+                db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance - 100 });
+                const card = cardDB[Math.floor(Math.random() * (cardDB.length - 1))];
+                myCards[card.id] = (myCards[card.id] || 0) + 1;
+                db.ref(`pairs/${currentPairId}/cards`).set(myCards);
+                showPopup("НОВАЯ КАРТА!", card.img, card.rare);
+            }
         }
 
         function renderCards() {
             const grid = document.getElementById('cardGrid');
             grid.innerHTML = "";
             cardDB.forEach(c => {
+                if(c.id === 'fail') return;
                 const count = myCards[c.id] || 0;
-                const isOwned = count > 0;
-                const cls = isOwned ? c.rare : "locked";
-                const imgStr = `background-image: url('${c.img}');`;
-                
-                grid.innerHTML += `
-                    <div class="card-item ${cls}" style="${imgStr}">
-                        ${isOwned ? `<div class="card-count">x${count}</div>` : "🔒"}
-                    </div>
-                `;
+                grid.innerHTML += `<div class="card-item ${count > 0 ? c.rare : 'locked'}" style="background-image: url('${c.img}')">
+                    ${count > 0 ? `<div class="card-count">x${count}</div>` : "🔒"}
+                </div>`;
             });
         }
 
-        // --- ЛОГИКА ПОКУПКИ ПАКА (ОТ 10 ДО 100 МОНЕТ ИЛИ КАРТА) ---
-        function buyPack() {
-            if (globalBalance < 100) return alert("❌ Не хватает монет! Нужно 100 RobCoins.");
-            
-            const randomChance = Math.random() * 100;
-            const popupRarity = document.getElementById('popupRarity');
-            const popupImg = document.getElementById('popupImg');
-
-            // 1. ШАНС НА МОНЕТЫ (40%)
-            if (randomChance < 40) {
-                const coinsWon = Math.floor(Math.random() * (100 - 10 + 1)) + 10; // От 10 до 100
-                db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance - 100 + coinsWon });
-                
-                popupRarity.innerText = "💰 ВЫПАЛИ МОНЕТЫ! 💰";
-                popupRarity.style.color = "#ffd700";
-                popupImg.style.backgroundImage = "url('coin1.png')";
-                popupImg.className = ""; // Сброс классов рамок
-                alert(`💰 Повезло! Ты выбил ${coinsWon} RobCoins!`);
-                tg.HapticFeedback.notificationOccurred('success');
-            } 
-            // 2. ШАНС НА КАРТУ (60%)
-            else {
-                db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance - 100 });
-                
-                const rand = Math.random() * 100;
-                let rarity = "unc"; 
-                if (rand > 50 && rand <= 80) rarity = "rar"; 
-                else if (rand > 80 && rand <= 95) rarity = "epi"; 
-                else if (rand > 95) rarity = "leg"; 
-
-                // Фильтр против бесконечных повторок (выбираем из всех, но увеличиваем счетчик)
-                const cardNum = Math.floor(Math.random() * 3) + 1;
-                const pulledCardId = rarity + cardNum; 
-                
-                const currentCount = myCards[pulledCardId] || 0;
-                db.ref(`pairs/${currentPairId}/cards/${pulledCardId}`).set(currentCount + 1);
-                
-                const cInfo = cardDB.find(c => c.id === pulledCardId);
-                popupRarity.innerText = (rarity === "leg") ? "🎉 ЛЕГЕНДАРКА! 🎉" : 
-                                       (rarity === "epi") ? "ЭПИЧЕСКАЯ!" : 
-                                       (rarity === "rar") ? "РЕДКАЯ!" : "НЕОБЫЧНАЯ";
-                popupRarity.style.color = (rarity === "leg") ? "#ffd700" : (rarity === "epi") ? "#8a2be2" : (rarity === "rar") ? "#007aff" : "#a3a3a3";
-                popupImg.style.backgroundImage = `url('${cInfo.img}')`;
-                popupImg.className = `unc rar epi leg ${rarity}`;
-                
-                tg.HapticFeedback.impactOccurred('heavy');
-                if (rarity === "leg") tg.HapticFeedback.notificationOccurred('success');
-            }
-            
-            document.getElementById('cardPopup').style.display = 'flex';
-        }
-
+        function showLibrary() { renderCards(); document.getElementById('mainUI').style.display='none'; document.getElementById('libraryOverlay').style.display='flex'; }
+        function showShop() { document.getElementById('mainUI').style.display='none'; document.getElementById('shopOverlay').style.display='flex'; }
+        function closeMenu(id) { document.getElementById(id).style.display='none'; document.getElementById('mainUI').style.display='flex'; }
         function closePopup() { document.getElementById('cardPopup').style.display = 'none'; }
-        function closeMenu(id) { document.getElementById(id).style.display = 'none'; document.getElementById('mainUI').style.display = 'flex'; }
-
-        function openChest() {
-            if (!currentPairId) return alert("Сначала позови напарника!");
-            const todayDate = new Date().toISOString().split('T')[0];
-            if (myActivity.chest && myActivity.date === todayDate) return alert("⛔ Ты уже открывал сундук сегодня!");
-            const reward = Math.floor(Math.random() * 91) + 10;
-            db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance + reward });
-            db.ref(`pairs/${currentPairId}/activity/${myId}`).update({ chest: true, date: todayDate });
-            tg.HapticFeedback.notificationOccurred('success');
-            alert(`🎁 ВАУ! Из сундука выпало ${reward} RobCoins!`);
-        }
-
-        function showQuests() {
-            if (!currentPairId) return alert("Сначала позови напарника!");
-            document.getElementById('mainUI').style.display = 'none'; document.getElementById('questsOverlay').style.display = 'flex';
-            const todayDate = new Date().toISOString().split('T')[0]; const isToday = (myActivity.date === todayDate);
-            const q1Done = isToday && myActivity.qSnake;
-            document.getElementById('q1-box').className = q1Done ? "quest-box quest-done" : "quest-box";
-            document.getElementById('q1-prog').innerText = q1Done ? "ВЫПОЛНЕНО ✅" : "0/15 очков";
-            const rPlays = isToday ? (myActivity.qRocket || 0) : 0; const q2Done = rPlays >= 3;
-            document.getElementById('q2-box').className = q2Done ? "quest-box quest-done" : "quest-box";
-            document.getElementById('q2-prog').innerText = q2Done ? "ВЫПОЛНЕНО ✅" : `${rPlays}/3 игр`;
-        }
-
-        function inviteFriend() {
-            const link = `https://t.me/DailykDuoBot/${shortName}?startapp=${myId}`;
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Залетай ко мне в пару! Будем делать рички и выбивать карточки 🚀`);
-        }
-
-        function renamePet() {
-            if (!currentPairId) return;
-            const isFirst = (currentName === "СИРИЧИК" || currentName === "НУЖЕН НАПАРНИК");
-            if (!isFirst && globalBalance < 50) return alert("❌ Нужно 50 💰");
-            const newName = prompt(isFirst ? "Первая смена бесплатно!" : "Смена имени стоит 50 монет!", currentName);
-            if (newName && newName.trim().length > 0 && newName.length < 15) {
-                const updates = { name: newName.toUpperCase() };
-                if (!isFirst) updates.balance = globalBalance - 50;
-                db.ref(`pairs/${currentPairId}`).update(updates);
-            }
-        }
-
-        function checkIn() {
-            if (!currentPairId) return;
-            const today = new Date().toISOString().split('T')[0];
-            if (lastStreakDate === today) return alert("⛔ Вы уже набили серию за сегодня!");
-            db.ref(`pairs/${currentPairId}/clicks/${myId}`).set(today).then(() => {
-                db.ref(`pairs/${currentPairId}/clicks`).once('value', s => {
-                    const clicks = s.val() || {}; const ids = currentPairId.split('_');
-                    if (clicks[ids[0]] === today && clicks[ids[1]] === today) {
-                        db.ref(`pairs/${currentPairId}`).update({ streak: firebase.database.ServerValue.increment(1), lastStreakDate: today, clicks: { [ids[0]]: "", [ids[1]]: "" } });
-                        alert("🎉 ВЫ ОБА ОТМЕТИЛИСЬ! Серия выросла!");
-                    } else { tg.HapticFeedback.impactOccurred('heavy'); }
-                });
-            });
-        }
-
-        let gameLoop, score, snake, food, dx, dy, player, enemies, rocketDir = 0;
-        const canvas = document.getElementById("gameCanvas"); const ctx = canvas.getContext("2d");
-
-        function startGame(type) {
-            if (!currentPairId) return alert("Сначала позови напарника!");
-            document.getElementById('mainUI').style.display = 'none'; document.getElementById('gameOverlay').style.display = 'flex';
-            document.getElementById('snakeCtrl').style.display = type === 'snake' ? 'grid' : 'none';
-            document.getElementById('rocketCtrl').style.display = type === 'rocket' ? 'grid' : 'none';
-            score = 0; document.getElementById('gameScore').innerText = "0";
-            if (type === 'snake') { snake = [{x:150,y:150}]; food = {x:80,y:80}; dx=10; dy=0; gameLoop = setInterval(drawSnake, 100); }
-            else { player = {x:135, y:260}; enemies = []; gameLoop = setInterval(drawRocket, 20); }
-        }
-
-        function exitGame() { clearInterval(gameLoop); document.getElementById('mainUI').style.display = 'flex'; document.getElementById('gameOverlay').style.display = 'none'; }
-        
-        function drawSnake() {
-            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-            if (head.x<0||head.x>=300||head.y<0||head.y>=300||snake.some(s=>s.x===head.x&&s.y===head.y)) return endGame(score, 'snake');
-            snake.unshift(head);
-            if (head.x===food.x&&head.y===food.y) { score++; food={x:Math.floor(Math.random()*29)*10, y:Math.floor(Math.random()*29)*10}; } else { snake.pop(); }
-            ctx.fillStyle="black"; ctx.fillRect(0,0,300,300); ctx.fillStyle="lime"; snake.forEach(s=>ctx.fillRect(s.x,s.y,9,9)); ctx.fillStyle="red"; ctx.fillRect(food.x,food.y,9,9);
-            document.getElementById('gameScore').innerText = score;
-        }
-        function changeDir(nx, ny) { if (nx !== -dx && ny !== -dy) { dx = nx; dy = ny; } }
-
-        function moveRocket(d) { rocketDir = d; }
-        function drawRocket() {
-            ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
-            player.x += rocketDir*5; if (player.x<0) player.x=0; if (player.x>270) player.x=270;
-            ctx.drawImage(rocketImg, player.x, 260, 30, 30);
-            if (Math.random()<0.06) enemies.push({x:Math.random()*280, y:-20, s:3+Math.random()*4});
-            enemies.forEach((en, i) => {
-                en.y += en.s; ctx.drawImage(asteroidImg, en.x - 8, en.y - 8, 16, 16);
-                if (en.y>260 && en.y<290 && en.x>player.x && en.x<player.x+30) return endGame(Math.floor(score/5), 'rocket');
-                if (en.y>300) { enemies.splice(i,1); score++; document.getElementById('gameScore').innerText = score; }
-            });
-        }
-
-        function endGame(reward, type) {
-            clearInterval(gameLoop);
-            const todayDate = new Date().toISOString().split('T')[0];
-            let qUpdates = {}, questMessage = "", questReward = 0;
-            const isToday = (myActivity.date === todayDate);
-            if (type === 'snake' && score >= 15 && (!isToday || !myActivity.qSnake)) { qUpdates['qSnake'] = true; questMessage = "\n🎯 КВЕСТ: +50 💰"; questReward = 50; }
-            let rPlays = isToday ? (myActivity.qRocket || 0) : 0;
-            if (type === 'rocket' && rPlays < 3) { rPlays++; qUpdates['qRocket'] = rPlays; if (rPlays === 3) { questMessage = "\n🎯 КВЕСТ: +50 💰"; questReward = 50; } }
-            if (Object.keys(qUpdates).length > 0) { qUpdates['date'] = todayDate; db.ref(`pairs/${currentPairId}/activity/${myId}`).update(qUpdates); }
-            db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance + reward + questReward });
-            tg.HapticFeedback.notificationOccurred('success');
-            alert(`Начислено: ${reward} 💰` + questMessage);
-            exitGame();
-        }
-
-        function deletePair() { if (confirm("УДАЛИТЬ ВСЁ?")) { const ids = currentPairId.split('_'); const pId = ids[0] === myId ? ids[1] : ids[0]; db.ref('users/'+myId+'/partner').remove(); db.ref('users/'+pId+'/partner').remove(); db.ref('pairs/'+currentPairId).remove(); location.reload(); } }
+        function inviteFriend() { tg.openTelegramLink(`https://t.me/share/url?url=https://t.me/DailykDuoBot/${shortName}?startapp=${myId}&text=Стань моим напарником в ROBIK!`); }
     </script>
 </body>
 </html>
