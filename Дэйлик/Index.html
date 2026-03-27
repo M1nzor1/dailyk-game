@@ -238,7 +238,6 @@
         tg.expand();
         tg.setHeaderColor('#0f0f11');
 
-        // ТВОИ КЛЮЧИ FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
             authDomain: "dailykgame-d75d8.firebaseapp.com",
@@ -334,14 +333,12 @@
             });
         }
 
-        // --- МЕНЮ КАТАЛОГА ---
         function showGamesCatalog() {
             if (!currentPairId) return alert("Сначала позови напарника!");
             document.getElementById('mainUI').style.display = 'none';
             document.getElementById('gamesCatalogOverlay').style.display = 'flex';
         }
 
-        // --- ЛОГИКА ВЫЛАЗКИ ---
         function startRaid() {
             if (!currentPairId) return;
             if (globalBalance < 20) return alert("❌ Не хватает монет! Вход стоит 20 RobCoins.");
@@ -440,7 +437,6 @@
             document.getElementById('mainUI').style.display = 'flex';
         }
 
-        // --- МАГАЗИН И БИБЛИОТЕКА ---
         function showShop() {
             if (!currentPairId) return alert("Сначала позови напарника!");
             document.getElementById('mainUI').style.display = 'none';
@@ -525,7 +521,6 @@
         function closePopup() { document.getElementById('cardPopup').style.display = 'none'; }
         function closeMenu(id) { document.getElementById(id).style.display = 'none'; document.getElementById('mainUI').style.display = 'flex'; }
 
-        // --- КВЕСТЫ, СУНДУК И МИНИ-ИГРЫ ---
         function openChest() {
             if (!currentPairId) return;
             const todayDate = new Date().toISOString().split('T')[0];
@@ -584,14 +579,13 @@
         let gameLoop, score, snake, food, dx, dy, player, enemies, rocketDir = 0;
         const canvas = document.getElementById("gameCanvas"); const ctx = canvas.getContext("2d");
 
-        // ОБНОВЛЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ NASCAR (ШИРОКИЕ МАШИНЫ)
-        let playerCar = { x: 127.5, y: 230, w: 45, h: 70 }; 
+        // ОБНОВЛЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ NASCAR (КУБИК 50x75)
+        let playerCar = { x: 125, y: 230, w: 50, h: 75 }; 
         let nascarDir = 0; 
         let enemiesNascar = [];
         let gameSpeed = 5;
         let roadOffset = 0;
         
-        // Загрузка картинок NASCAR
         const imgBg = new Image(); imgBg.src = 'nascar_bg.png';
         const imgBoundL = new Image(); imgBoundL.src = 'bound_left.png';
         const imgBoundR = new Image(); imgBoundR.src = 'bound_right.png';
@@ -612,7 +606,7 @@
             if (type === 'snake') { snake = [{x:150,y:150}]; food = {x:80,y:80}; dx=10; dy=0; gameLoop = setInterval(drawSnake, 100); }
             else if (type === 'rocket') { player = {x:135, y:260}; enemies = []; gameLoop = setInterval(drawRocket, 20); }
             else if (type === 'nascar') { 
-                playerCar = { x: 127.5, y: 230, w: 50, h: 70 }; 
+                playerCar = { x: 125, y: 230, w: 50, h: 75 }; // Ширина 50
                 nascarDir = 0;
                 enemiesNascar = []; 
                 gameSpeed = 5; 
@@ -623,7 +617,6 @@
 
         function exitGame() { clearInterval(gameLoop); document.getElementById('mainUI').style.display = 'flex'; document.getElementById('gameOverlay').style.display = 'none'; }
         
-        // --- ЛОГИКА NASCAR (РЕЗКАЯ И БЫСТРАЯ) ---
         function moveNascar(dir) {
             nascarDir = dir; 
         }
@@ -644,7 +637,6 @@
                 ctx.drawImage(imgBoundR, 280, 0, 20, 300); 
             }
 
-            // ПЛАВНОЕ И РЕЗКОЕ ДВИЖЕНИЕ ИГРОКА (СКОРОСТЬ ПОВОРОТА 9)
             playerCar.x += nascarDir * 9; 
 
             if (playerCar.x < 20) playerCar.x = 20; 
@@ -657,14 +649,14 @@
                 ctx.fillRect(playerCar.x, playerCar.y, playerCar.w, playerCar.h);
             }
 
-            // Спавн широких врагов
+            // Ширина врагов тоже 50
             if (Math.random() < 0.02 && enemiesNascar.length < 2) {
-                let randomX = 20 + Math.random() * (260 - 45); 
+                let randomX = 20 + Math.random() * (260 - 50); 
                 enemiesNascar.push({
                     x: randomX,
                     y: -100,
-                    w: 55,
-                    h: 70,
+                    w: 50,
+                    h: 75,
                     color: ['#ff3b30', '#ff9500', '#34c759'][Math.floor(Math.random()*3)],
                     passed: false
                 });
@@ -681,7 +673,6 @@
                     ctx.fillRect(en.x, en.y, en.w, en.h);
                 }
 
-                // Логика обгона (УСКОРЕНИЕ +0.4)
                 if (!en.passed && en.y > playerCar.y + playerCar.h) {
                     en.passed = true;
                     score++;
@@ -705,7 +696,6 @@
             }
         }
         
-        // --- ЛОГИКА ЗМЕЙКИ ---
         function drawSnake() {
             const head = {x: snake[0].x + dx, y: snake[0].y + dy};
             if (head.x<0||head.x>=300||head.y<0||head.y>=300||snake.some(s=>s.x===head.x&&s.y===head.y)) return endGame(score, 'snake');
@@ -716,7 +706,6 @@
         }
         function changeDir(nx, ny) { if (nx !== -dx && ny !== -dy) { dx = nx; dy = ny; } }
 
-        // --- ЛОГИКА РАКЕТЫ ---
         function moveRocket(d) { rocketDir = d; }
         function drawRocket() {
             ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
@@ -730,7 +719,6 @@
             });
         }
 
-        // --- ЗАВЕРШЕНИЕ ИГРЫ ---
         function endGame(reward, type) {
             clearInterval(gameLoop);
             const todayDate = new Date().toISOString().split('T')[0];
