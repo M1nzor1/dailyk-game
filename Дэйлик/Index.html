@@ -108,7 +108,7 @@
         </div>
 
         <div id="bottom" style="width: 100%;">
-            <!-- КНОПКА ОТМЕТИТЬСЯ (появляется только когда есть пара) -->
+            <!-- КНОПКА ОТМЕТИТЬСЯ -->
             <button id="actBtn" class="btn-check" onclick="checkIn()" style="display:none; margin: 0 auto;">ОТМЕТИТЬСЯ</button>
             <button id="invBtn" class="btn-invite" onclick="inviteFriend()" style="display:none; margin: 0 auto;">ПОЗВАТЬ НАПАРНИКА 🤝</button>
 
@@ -163,7 +163,7 @@
             <div class="raid-card raid-card-closed" onclick="chooseRaidCard(this)"></div>
             <div class="raid-card raid-card-closed" onclick="chooseRaidCard(this)"></div>
         </div>
-        <p style="font-size: 11px; color: #666; width: 80%; margin: 5px 0;">Найди монеты или карту робота, но не попадись на СЛОМАННЫЙ МОДУЛЬ!</p>
+        <p style="font-size: 11px; color: #666; width: 80%; margin: 5px 0;">Чем выше этаж, тем больше шансов наткнуться на СЛОМАННЫЙ МОДУЛЬ!</p>
         <button id="collectBtn" class="btn-raid-collect" onclick="endRaid(true)" style="display:none;">СБЕЖАТЬ С ДОБЫЧЕЙ ✅</button>
     </div>
 
@@ -235,7 +235,7 @@
         tg.expand();
         tg.setHeaderColor('#0f0f11');
 
-        // ТВОИ КЛЮЧИ FIREBASE УСТАНОВЛЕНЫ И ГОТОВЫ К РАБОТЕ
+        // ТВОИ КЛЮЧИ FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyArraBpwbrf-5LDYR2-xuXfObfW3gF40Fw",
             authDomain: "dailykgame-d75d8.firebaseapp.com",
@@ -361,10 +361,12 @@
             tg.HapticFeedback.impactOccurred('medium');
             element.classList.remove('raid-card-closed');
 
+            // УВЕЛИЧИВАЕМ ШАНС ПРОИГРЫША С КАЖДЫМ ЭТАЖОМ (1 этаж = 12%, 20 этаж = 50%)
+            let failChance = 10 + (raidData.floor * 2); 
             const chance = Math.random() * 100;
 
-            // ШАНС 20% - ПРОИГРЫШ
-            if (chance < 20) { 
+            if (chance < failChance) { 
+                // ПОПАЛСЯ НА ЛОМ
                 element.style.backgroundImage = `url('${raidFailImg}')`;
                 element.classList.add('fail');
                 tg.HapticFeedback.notificationOccurred('error');
@@ -373,8 +375,8 @@
                     endRaid(false);
                 }, 800);
             } else {
-                // ШАНС ТОЛЬКО 5% - КАРТА РОБОТА (очень редко!)
-                if (chance < 25) { 
+                // ШАНС НА КАРТУ - СТРОГО 5% ИЗ ОСТАВШИХСЯ
+                if (chance < failChance + 5) { 
                     const randomCard = cardDB[Math.floor(Math.random() * cardDB.length)];
                     // Если карты еще нет ни в коллекции, ни в сейфе Вылазки
                     if (!myCards[randomCard.id] && !raidData.bankCards.includes(randomCard.id)) {
@@ -387,7 +389,7 @@
                         raidData.bankCoins += 30; 
                     }
                 } else { 
-                    // ШАНС 75% - МОНЕТКИ
+                    // ОСТАЛЬНОЙ ШАНС - МОНЕТКИ
                     element.style.backgroundImage = `url('${raidCoinsImg}')`;
                     const win = Math.floor(Math.random() * 41) + 10;
                     raidData.bankCoins += win;
