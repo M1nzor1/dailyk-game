@@ -586,7 +586,7 @@
         const canvas = document.getElementById("gameCanvas"); const ctx = canvas.getContext("2d");
 
         // ОБНОВЛЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ NASCAR (ПЛАВНОЕ УПРАВЛЕНИЕ)
-        let playerCar = { x: 132.5, y: 230, w: 45, h: 60 }; // x вместо lane
+        let playerCar = { x: 132.5, y: 230, w: 55, h: 60 }; // x вместо lane
         let nascarDir = 0; // Направление движения (-1 влево, 1 вправо)
         let enemiesNascar = [];
         let gameSpeed = 5;
@@ -613,7 +613,7 @@
             if (type === 'snake') { snake = [{x:150,y:150}]; food = {x:80,y:80}; dx=10; dy=0; gameLoop = setInterval(drawSnake, 100); }
             else if (type === 'rocket') { player = {x:135, y:260}; enemies = []; gameLoop = setInterval(drawRocket, 20); }
             else if (type === 'nascar') { 
-                playerCar = { x: 132.5, y: 230, w: 35, h: 60 }; // Ставим по центру (150 - половина ширины)
+                playerCar = { x: 132.5, y: 230, w: 55, h: 60 }; // Ставим по центру (150 - половина ширины)
                 nascarDir = 0;
                 enemiesNascar = []; 
                 gameSpeed = 5; 
@@ -669,7 +669,7 @@
                 enemiesNascar.push({
                     x: randomX,
                     y: -100,
-                    w: 35,
+                    w: 55,
                     h: 60,
                     color: ['#ff3b30', '#ff9500', '#34c759'][Math.floor(Math.random()*3)],
                     passed: false
