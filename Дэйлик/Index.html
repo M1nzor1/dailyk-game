@@ -44,6 +44,8 @@
         .btn-big-game { height: 70px; background: #1c1c1e; color: #fff; border: 2px solid #333; border-radius: 15px; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;}
         .btn-big-game span { font-size: 28px; }
         .btn-big-raid { border-color: #ff4500; color: #ff4500; background: rgba(255, 69, 0, 0.1);}
+        /* ДОБАВЛЕНА КНОПКА NASCAR */
+        .btn-big-nascar { border-color: #ffd700; color: #ffd700; background: rgba(255, 215, 0, 0.1);}
 
         #delBtn { background: transparent; color: #444; font-size: 10px; text-decoration: underline; margin-top: 5px; }
         .coin-icon { width: 30px; height: 30px; vertical-align: middle; margin-top: -2px; object-fit: contain; }
@@ -52,6 +54,11 @@
         canvas { background: #050505; border: 2px solid #333; border-radius: 15px; }
         .controls { display: grid; grid-template-columns: repeat(3, 75px); gap: 12px; margin-top: 20px; }
         .g-btn { width: 75px; height: 75px; background: #2c2c2e; border-radius: 20px; color: white; font-size: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid #444; }
+
+        /* ДОБАВЛЕНЫ СТИЛИ ДЛЯ КНОПОК NASCAR */
+        .controls-nascar { display: flex; gap: 30px; margin-top: 20px; width: 80%; justify-content: center; }
+        .g-btn-nascar { width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; color: white; font-size: 40px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; opacity: 0.6; }
+        .g-btn-nascar:active { opacity: 1; background: rgba(255,255,255,0.3); }
 
         .quest-box { background: #1c1c1e; border: 1px solid #333; width: 85%; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: left; }
         .quest-title { font-size: 14px; font-weight: bold; color: #fff; margin-bottom: 5px; }
@@ -139,6 +146,7 @@
         <div style="color: #888; font-size: 14px; margin-bottom: 10px;">Выбери режим:</div>
         
         <div class="games-list">
+            <button class="btn-big-game btn-big-nascar" onclick="startGame('nascar')"><span>🏎️</span> NASCAR Race</button>
             <button class="btn-big-game" onclick="startGame('snake')"><span>🐍</span> Змейка</button>
             <button class="btn-big-game" onclick="startGame('rocket')"><span>🚀</span> Ракета</button>
             <button class="btn-big-game btn-big-raid" onclick="startRaid()"><span>🔥</span> Вылазка (20 💰)</button>
@@ -217,15 +225,24 @@
     <div id="gameOverlay" class="overlay">
         <div id="gameScore" style="font-size: 32px; font-weight: 900; color: #ffd700; margin-bottom: 10px;">0</div>
         <canvas id="gameCanvas" width="300" height="300"></canvas>
+        
         <div class="controls" id="snakeCtrl">
             <div></div><div class="g-btn" ontouchstart="changeDir(0,-10)">▲</div><div></div>
             <div class="g-btn" ontouchstart="changeDir(-10,0)">◀</div><div class="g-btn" ontouchstart="changeDir(0,10)">▼</div><div class="g-btn" ontouchstart="changeDir(10,0)">▶</div>
         </div>
+        
         <div class="controls" id="rocketCtrl" style="display:none;">
             <div class="g-btn" ontouchstart="moveRocket(-1)" ontouchend="moveRocket(0)">◀</div>
             <div style="width:75px"></div>
             <div class="g-btn" ontouchstart="moveRocket(1)" ontouchend="moveRocket(0)">▶</div>
         </div>
+
+        <!-- ДОБАВЛЕНО: КОНТРОЛЛЕРЫ NASCAR -->
+        <div class="controls-nascar" id="nascarCtrl" style="display:none;">
+            <div class="g-btn-nascar" ontouchstart="moveNascar(-1)">◀</div>
+            <div class="g-btn-nascar" ontouchstart="moveNascar(1)">▶</div>
+        </div>
+
         <button onclick="exitGame()" style="background:#ff3b30; color:white; width:120px; height:45px; border-radius:15px; margin-top:25px; font-weight:bold;">ВЫЙТИ</button>
     </div>
 
@@ -590,20 +607,120 @@
         let gameLoop, score, snake, food, dx, dy, player, enemies, rocketDir = 0;
         const canvas = document.getElementById("gameCanvas"); const ctx = canvas.getContext("2d");
 
+        // ДОБАВЛЕНЫ ПЕРЕМЕННЫЕ ДЛЯ NASCAR
+        let playerCar = { lane: 1, y: 230, w: 35, h: 60 }; 
+        let enemiesNascar = [];
+        let gameSpeed = 5;
+        let roadOffset = 0;
+        const lanes = [50, 135, 220]; 
+        const imgBg = new Image(); imgBg.src = 'nascar_bg.png';
+        const imgBoundL = new Image(); imgBoundL.src = 'bound_left.png';
+        const imgBoundR = new Image(); imgBoundR.src = 'bound_right.png';
+
         function startGame(type) {
             if (!currentPairId) return;
             document.getElementById('mainUI').style.display = 'none'; 
             document.getElementById('gamesCatalogOverlay').style.display = 'none'; 
             document.getElementById('gameOverlay').style.display = 'flex';
+            
             document.getElementById('snakeCtrl').style.display = type === 'snake' ? 'grid' : 'none';
             document.getElementById('rocketCtrl').style.display = type === 'rocket' ? 'grid' : 'none';
+            // Включаем нужные кнопки управления
+            document.getElementById('nascarCtrl').style.display = type === 'nascar' ? 'flex' : 'none';
+            
             score = 0; document.getElementById('gameScore').innerText = "0";
             if (type === 'snake') { snake = [{x:150,y:150}]; food = {x:80,y:80}; dx=10; dy=0; gameLoop = setInterval(drawSnake, 100); }
-            else { player = {x:135, y:260}; enemies = []; gameLoop = setInterval(drawRocket, 20); }
+            else if (type === 'rocket') { player = {x:135, y:260}; enemies = []; gameLoop = setInterval(drawRocket, 20); }
+            else if (type === 'nascar') { 
+                playerCar = { lane: 1, y: 230, w: 35, h: 60 }; 
+                enemiesNascar = []; 
+                gameSpeed = 5; 
+                roadOffset = 0;
+                gameLoop = setInterval(drawNascar, 1000/60); 
+            }
         }
 
         function exitGame() { clearInterval(gameLoop); document.getElementById('mainUI').style.display = 'flex'; document.getElementById('gameOverlay').style.display = 'none'; }
         
+        // --- ЛОГИКА NASCAR ---
+        function drawNascar() {
+            ctx.clearRect(0, 0, 300, 300);
+            
+            roadOffset += gameSpeed;
+            if (roadOffset > 300) roadOffset = 0;
+            
+            // Заливка фона, если картинки еще грузятся
+            ctx.fillStyle = "#333";
+            ctx.fillRect(0, 0, 300, 300);
+            
+            // Рисуем картинки трассы
+            try {
+                ctx.drawImage(imgBg, 0, roadOffset - 300, 300, 300);
+                ctx.drawImage(imgBg, 0, roadOffset, 300, 300);
+                ctx.drawImage(imgBoundL, 0, 0, 20, 300);
+                ctx.drawImage(imgBoundR, 280, 0, 20, 300);
+            } catch(e) {}
+
+            // Машина игрока
+            ctx.fillStyle = "#007aff";
+            const pX = lanes[playerCar.lane] - playerCar.w/2;
+            ctx.fillRect(pX, playerCar.y, playerCar.w, playerCar.h);
+
+            // Спавн врагов
+            if (Math.random() < 0.02 && enemiesNascar.length < 2) {
+                enemiesNascar.push({
+                    lane: Math.floor(Math.random() * 3),
+                    y: -100,
+                    w: 35,
+                    h: 60,
+                    color: ['#ff3b30', '#ff9500', '#34c759'][Math.floor(Math.random()*3)],
+                    passed: false
+                });
+            }
+
+            // Движение врагов
+            for (let i = enemiesNascar.length - 1; i >= 0; i--) {
+                let en = enemiesNascar[i];
+                en.y += gameSpeed * 0.7;
+
+                ctx.fillStyle = en.color;
+                const eX = lanes[en.lane] - en.w/2;
+                ctx.fillRect(eX, en.y, en.w, en.h);
+
+                // Обогнал
+                if (!en.passed && en.y > playerCar.y + playerCar.h) {
+                    en.passed = true;
+                    score++;
+                    document.getElementById('gameScore').innerText = score;
+                    tg.HapticFeedback.impactOccurred('light');
+                    gameSpeed += 0.1;
+                }
+
+                // Столкновение
+                if (
+                    pX < eX + en.w &&
+                    pX + playerCar.w > eX &&
+                    playerCar.y < en.y + en.h &&
+                    playerCar.y + playerCar.h > en.y
+                ) {
+                    endGame(score, 'nascar');
+                    return;
+                }
+
+                if (en.y > 300) {
+                    enemiesNascar.splice(i, 1);
+                }
+            }
+        }
+
+        function moveNascar(dir) {
+            playerCar.lane += dir;
+            if (playerCar.lane < 0) playerCar.lane = 0;
+            if (playerCar.lane > 2) playerCar.lane = 2;
+            tg.HapticFeedback.selectionChanged();
+        }
+        
+        // --- ЛОГИКА ЗМЕЙКИ ---
         function drawSnake() {
             const head = {x: snake[0].x + dx, y: snake[0].y + dy};
             if (head.x<0||head.x>=300||head.y<0||head.y>=300||snake.some(s=>s.x===head.x&&s.y===head.y)) return endGame(score, 'snake');
@@ -614,6 +731,7 @@
         }
         function changeDir(nx, ny) { if (nx !== -dx && ny !== -dy) { dx = nx; dy = ny; } }
 
+        // --- ЛОГИКА РАКЕТЫ ---
         function moveRocket(d) { rocketDir = d; }
         function drawRocket() {
             ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
@@ -627,16 +745,21 @@
             });
         }
 
+        // --- ЗАВЕРШЕНИЕ ИГРЫ ---
         function endGame(reward, type) {
             clearInterval(gameLoop);
             const todayDate = new Date().toISOString().split('T')[0];
             let qUpdates = {}, questMessage = "", questReward = 0;
             const isToday = (myActivity.date === todayDate);
+            
             if (type === 'snake' && score >= 15 && (!isToday || !myActivity.qSnake)) { qUpdates['qSnake'] = true; questMessage = "\n🎯 КВЕСТ: +50 💰"; questReward = 50; }
+            
             let rPlays = isToday ? (myActivity.qRocket || 0) : 0;
             if (type === 'rocket' && rPlays < 3) { rPlays++; qUpdates['qRocket'] = rPlays; if (rPlays === 3) { questMessage = "\n🎯 КВЕСТ: +50 💰"; questReward = 50; } }
+            
             if (Object.keys(qUpdates).length > 0) { qUpdates['date'] = todayDate; db.ref(`pairs/${currentPairId}/activity/${myId}`).update(qUpdates); }
             db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance + reward + questReward });
+            
             tg.HapticFeedback.notificationOccurred('success');
             alert(`Начислено: ${reward} 💰` + questMessage);
             exitGame();
