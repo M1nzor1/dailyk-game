@@ -35,16 +35,12 @@
         .btn-shop { background: linear-gradient(135deg, #ffd700, #b8860b); color: black; border: 1px solid #daa520; font-size: 11px; font-weight: 900;}
         .btn-lib { background: linear-gradient(135deg, #007aff, #0056b3); color: white; border: 1px solid #004080; font-size: 11px; font-weight: 900;}
         
-        /* ШИРОКАЯ КНОПКА КАТАЛОГА ИГР */
         .btn-catalog { background: linear-gradient(135deg, #ff3b30, #ff9500); color: white; grid-column: span 2; height: 55px; font-size: 16px; border: 1px solid #fff; border-radius: 15px; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(255,59,48,0.3); }
-        .btn-catalog:active { transform: scale(0.95); }
 
-        /* СПИСОК ИГР */
         .games-list { display: flex; flex-direction: column; gap: 12px; width: 85%; margin-top: 20px; }
         .btn-big-game { height: 70px; background: #1c1c1e; color: #fff; border: 2px solid #333; border-radius: 15px; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;}
         .btn-big-game span { font-size: 28px; }
         .btn-big-raid { border-color: #ff4500; color: #ff4500; background: rgba(255, 69, 0, 0.1);}
-        /* ДОБАВЛЕНА КНОПКА NASCAR */
         .btn-big-nascar { border-color: #ffd700; color: #ffd700; background: rgba(255, 215, 0, 0.1);}
 
         #delBtn { background: transparent; color: #444; font-size: 10px; text-decoration: underline; margin-top: 5px; }
@@ -55,7 +51,6 @@
         .controls { display: grid; grid-template-columns: repeat(3, 75px); gap: 12px; margin-top: 20px; }
         .g-btn { width: 75px; height: 75px; background: #2c2c2e; border-radius: 20px; color: white; font-size: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid #444; }
 
-        /* ДОБАВЛЕНЫ СТИЛИ ДЛЯ КНОПОК NASCAR */
         .controls-nascar { display: flex; gap: 30px; margin-top: 20px; width: 80%; justify-content: center; }
         .g-btn-nascar { width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; color: white; font-size: 40px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; opacity: 0.6; }
         .g-btn-nascar:active { opacity: 1; background: rgba(255,255,255,0.3); }
@@ -120,20 +115,14 @@
             <button id="invBtn" class="btn-invite" onclick="inviteFriend()" style="display:none; margin: 0 auto;">ПОЗВАТЬ НАПАРНИКА 🤝</button>
 
             <div class="menu-grid" style="margin: 10px auto;">
-                <!-- КНОПКА КАТАЛОГА ИГР -->
                 <button class="btn-catalog" onclick="showGamesCatalog()">🎮 КАТАЛОГ ИГР</button>
-                
                 <button class="btn-game btn-bonus" onclick="openChest()"><span>🎁</span>СУНДУК</button>
                 <button class="btn-game btn-quest" onclick="showQuests()"><span>🎯</span>КВЕСТЫ</button>
-                
                 <button class="btn-game btn-shop" onclick="showShop()">
-                    <img src="shop_icon.png" alt="Шоп" onerror="this.style.display='none'">
-                    МАГАЗИН
+                    <img src="shop_icon.png" alt="Шоп" onerror="this.style.display='none'">МАГАЗИН
                 </button>
-                
                 <button class="btn-game btn-lib" onclick="showLibrary()">
-                    <img src="lib_icon.png" alt="Книги" onerror="this.style.display='none'">
-                    КОЛЛЕКЦИЯ
+                    <img src="lib_icon.png" alt="Книги" onerror="this.style.display='none'">КОЛЛЕКЦИЯ
                 </button>
             </div>
             <button id="delBtn" onclick="deletePair()">разорвать пару</button>
@@ -160,9 +149,7 @@
         <div class="raid-floor-box">ЭТАЖ: <span id="raidFloor">1</span>/20</div>
         <div class="raid-info">
             <div style="font-size: 12px; color: #aaa;">В СЕЙФЕ:</div>
-            <div class="raid-bank-val">
-                <span id="raidBankCoins">0</span> 💰 | <span id="raidBankCards">0</span> 🎴
-            </div>
+            <div class="raid-bank-val"><span id="raidBankCoins">0</span> 💰 | <span id="raidBankCards">0</span> 🎴</div>
         </div>
         <div class="raid-card-box">
             <div class="raid-card raid-card-closed" onclick="chooseRaidCard(this)"></div>
@@ -237,10 +224,10 @@
             <div class="g-btn" ontouchstart="moveRocket(1)" ontouchend="moveRocket(0)">▶</div>
         </div>
 
-        <!-- ДОБАВЛЕНО: КОНТРОЛЛЕРЫ NASCAR -->
+        <!-- ОБНОВЛЕНО: КОНТРОЛЛЕРЫ NASCAR С ОТЖАТИЕМ КНОПКИ (как в ракете) -->
         <div class="controls-nascar" id="nascarCtrl" style="display:none;">
-            <div class="g-btn-nascar" ontouchstart="moveNascar(-1)">◀</div>
-            <div class="g-btn-nascar" ontouchstart="moveNascar(1)">▶</div>
+            <div class="g-btn-nascar" ontouchstart="moveNascar(-1)" ontouchend="moveNascar(0)">◀</div>
+            <div class="g-btn-nascar" ontouchstart="moveNascar(1)" ontouchend="moveNascar(0)">▶</div>
         </div>
 
         <button onclick="exitGame()" style="background:#ff3b30; color:white; width:120px; height:45px; border-radius:15px; margin-top:25px; font-weight:bold;">ВЫЙТИ</button>
@@ -378,12 +365,10 @@
             tg.HapticFeedback.impactOccurred('medium');
             element.classList.remove('raid-card-closed');
 
-            // УВЕЛИЧИВАЕМ ШАНС ПРОИГРЫША С КАЖДЫМ ЭТАЖОМ (1 этаж = 12%, 20 этаж = 50%)
             let failChance = 10 + (raidData.floor * 2); 
             const chance = Math.random() * 100;
 
             if (chance < failChance) { 
-                // ПОПАЛСЯ НА ЛОМ
                 element.style.backgroundImage = `url('${raidFailImg}')`;
                 element.classList.add('fail');
                 tg.HapticFeedback.notificationOccurred('error');
@@ -392,21 +377,17 @@
                     endRaid(false);
                 }, 800);
             } else {
-                // ШАНС НА КАРТУ - СТРОГО 5% ИЗ ОСТАВШИХСЯ
                 if (chance < failChance + 5) { 
                     const randomCard = cardDB[Math.floor(Math.random() * cardDB.length)];
-                    // Если карты еще нет ни в коллекции, ни в сейфе Вылазки
                     if (!myCards[randomCard.id] && !raidData.bankCards.includes(randomCard.id)) {
                         element.style.backgroundImage = `url('${randomCard.img}')`;
                         element.classList.add(randomCard.rare);
                         raidData.bankCards.push(randomCard.id);
                     } else {
-                        // Если карта уже есть, даем утешительные монеты
                         element.style.backgroundImage = `url('${raidCoinsImg}')`;
                         raidData.bankCoins += 30; 
                     }
                 } else { 
-                    // ОСТАЛЬНОЙ ШАНС - МОНЕТКИ
                     element.style.backgroundImage = `url('${raidCoinsImg}')`;
                     const win = Math.floor(Math.random() * 41) + 10;
                     raidData.bankCoins += win;
@@ -448,7 +429,7 @@
                 let updates = { balance: globalBalance + raidData.bankCoins };
                 if (raidData.bankCards.length > 0) {
                     raidData.bankCards.forEach(cardId => {
-                        myCards[cardId] = 1; // Устанавливаем ровно 1
+                        myCards[cardId] = 1;
                     });
                     updates['cards'] = myCards;
                 }
@@ -497,9 +478,8 @@
             const popupRarity = document.getElementById('popupRarity');
             const popupImg = document.getElementById('popupImg');
 
-            // ШАНС НА КАРТУ В МАГАЗИНЕ СТАЛ ОЧЕНЬ РЕДКИМ (10% КАРТА, 90% МОНЕТЫ)
             if (randomChance < 90) {
-                const coinsWon = Math.floor(Math.random() * 141) + 10; // От 10 до 150 монет
+                const coinsWon = Math.floor(Math.random() * 141) + 10;
                 db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance - 100 + coinsWon });
                 popupRarity.innerText = "💰 ВЫПАЛИ МОНЕТЫ! 💰";
                 popupRarity.style.color = "#ffd700";
@@ -521,7 +501,6 @@
                 const cInfo = cardDB.find(c => c.id === pulledCardId);
 
                 if (isAlreadyOwned) {
-                    // ПОВТОРКА - ВОЗВРАЩАЕМ 50 МОНЕТ
                     db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance - 100 + 50 });
                     popupRarity.innerText = "ПОВТОРКА! УТЕШИТЕЛЬНЫЕ +50 💰";
                     popupRarity.style.color = "#ff4500";
@@ -529,9 +508,8 @@
                     popupImg.className = `unc rar epi leg ${rarity}`;
                     tg.HapticFeedback.impactOccurred('medium');
                 } else {
-                    // НОВАЯ КАРТА
                     db.ref(`pairs/${currentPairId}`).update({ balance: globalBalance - 100 });
-                    myCards[pulledCardId] = 1; // Только 1 штука
+                    myCards[pulledCardId] = 1; 
                     db.ref(`pairs/${currentPairId}/cards/${pulledCardId}`).set(1);
                     
                     popupRarity.innerText = (rarity === "leg") ? "🎉 ЛЕГЕНДАРКА! 🎉" : (rarity === "epi") ? "ЭПИЧЕСКАЯ!" : (rarity === "rar") ? "РЕДКАЯ!" : "НЕОБЫЧНАЯ";
@@ -607,15 +585,19 @@
         let gameLoop, score, snake, food, dx, dy, player, enemies, rocketDir = 0;
         const canvas = document.getElementById("gameCanvas"); const ctx = canvas.getContext("2d");
 
-        // ДОБАВЛЕНЫ ПЕРЕМЕННЫЕ ДЛЯ NASCAR
-        let playerCar = { lane: 1, y: 230, w: 35, h: 60 }; 
+        // ОБНОВЛЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ NASCAR (ПЛАВНОЕ УПРАВЛЕНИЕ)
+        let playerCar = { x: 132.5, y: 230, w: 35, h: 60 }; // x вместо lane
+        let nascarDir = 0; // Направление движения (-1 влево, 1 вправо)
         let enemiesNascar = [];
         let gameSpeed = 5;
         let roadOffset = 0;
-        const lanes = [50, 135, 220]; 
+        
+        // Загрузка картинок NASCAR
         const imgBg = new Image(); imgBg.src = 'nascar_bg.png';
         const imgBoundL = new Image(); imgBoundL.src = 'bound_left.png';
         const imgBoundR = new Image(); imgBoundR.src = 'bound_right.png';
+        const imgPlayerCar = new Image(); imgPlayerCar.src = 'player_car.png';
+        const imgEnemyCar = new Image(); imgEnemyCar.src = 'enemy_car.png';
 
         function startGame(type) {
             if (!currentPairId) return;
@@ -625,14 +607,14 @@
             
             document.getElementById('snakeCtrl').style.display = type === 'snake' ? 'grid' : 'none';
             document.getElementById('rocketCtrl').style.display = type === 'rocket' ? 'grid' : 'none';
-            // Включаем нужные кнопки управления
             document.getElementById('nascarCtrl').style.display = type === 'nascar' ? 'flex' : 'none';
             
             score = 0; document.getElementById('gameScore').innerText = "0";
             if (type === 'snake') { snake = [{x:150,y:150}]; food = {x:80,y:80}; dx=10; dy=0; gameLoop = setInterval(drawSnake, 100); }
             else if (type === 'rocket') { player = {x:135, y:260}; enemies = []; gameLoop = setInterval(drawRocket, 20); }
             else if (type === 'nascar') { 
-                playerCar = { lane: 1, y: 230, w: 35, h: 60 }; 
+                playerCar = { x: 132.5, y: 230, w: 35, h: 60 }; // Ставим по центру (150 - половина ширины)
+                nascarDir = 0;
                 enemiesNascar = []; 
                 gameSpeed = 5; 
                 roadOffset = 0;
@@ -642,7 +624,11 @@
 
         function exitGame() { clearInterval(gameLoop); document.getElementById('mainUI').style.display = 'flex'; document.getElementById('gameOverlay').style.display = 'none'; }
         
-        // --- ЛОГИКА NASCAR ---
+        // --- ЛОГИКА NASCAR (ПЛАВНАЯ) ---
+        function moveNascar(dir) {
+            nascarDir = dir; // Устанавливаем направление при нажатии
+        }
+
         function drawNascar() {
             ctx.clearRect(0, 0, 300, 300);
             
@@ -653,23 +639,35 @@
             ctx.fillStyle = "#333";
             ctx.fillRect(0, 0, 300, 300);
             
-            // Рисуем картинки трассы
-            try {
+            // Рисуем трассу
+            if (imgBg.complete && imgBg.naturalWidth > 0) {
                 ctx.drawImage(imgBg, 0, roadOffset - 300, 300, 300);
                 ctx.drawImage(imgBg, 0, roadOffset, 300, 300);
-                ctx.drawImage(imgBoundL, 0, 0, 20, 300);
-                ctx.drawImage(imgBoundR, 280, 0, 20, 300);
-            } catch(e) {}
+                ctx.drawImage(imgBoundL, 0, 0, 20, 300); // Левый отбойник шириной 20px
+                ctx.drawImage(imgBoundR, 280, 0, 20, 300); // Правый отбойник с 280px
+            }
 
-            // Машина игрока
-            ctx.fillStyle = "#007aff";
-            const pX = lanes[playerCar.lane] - playerCar.w/2;
-            ctx.fillRect(pX, playerCar.y, playerCar.w, playerCar.h);
+            // ПЛАВНОЕ ДВИЖЕНИЕ ИГРОКА
+            playerCar.x += nascarDir * 5; // Скорость поворота
 
-            // Спавн врагов
+            // Не даем выехать за пределы трассы и на отбойники
+            if (playerCar.x < 20) playerCar.x = 20; 
+            if (playerCar.x > 280 - playerCar.w) playerCar.x = 280 - playerCar.w;
+
+            // Рисуем машину игрока
+            if (imgPlayerCar.complete && imgPlayerCar.naturalWidth > 0) {
+                ctx.drawImage(imgPlayerCar, playerCar.x, playerCar.y, playerCar.w, playerCar.h);
+            } else {
+                ctx.fillStyle = "#007aff";
+                ctx.fillRect(playerCar.x, playerCar.y, playerCar.w, playerCar.h);
+            }
+
+            // Спавн врагов на случайной Х координате
             if (Math.random() < 0.02 && enemiesNascar.length < 2) {
+                // Враг спавнится между 20px (левый край) и 280px-ширина (правый край)
+                let randomX = 20 + Math.random() * (260 - 35); 
                 enemiesNascar.push({
-                    lane: Math.floor(Math.random() * 3),
+                    x: randomX,
                     y: -100,
                     w: 35,
                     h: 60,
@@ -683,23 +681,25 @@
                 let en = enemiesNascar[i];
                 en.y += gameSpeed * 0.7;
 
-                ctx.fillStyle = en.color;
-                const eX = lanes[en.lane] - en.w/2;
-                ctx.fillRect(eX, en.y, en.w, en.h);
+                if (imgEnemyCar.complete && imgEnemyCar.naturalWidth > 0) {
+                    ctx.drawImage(imgEnemyCar, en.x, en.y, en.w, en.h);
+                } else {
+                    ctx.fillStyle = en.color;
+                    ctx.fillRect(en.x, en.y, en.w, en.h);
+                }
 
-                // Обогнал
+                // Логика обгона
                 if (!en.passed && en.y > playerCar.y + playerCar.h) {
                     en.passed = true;
                     score++;
                     document.getElementById('gameScore').innerText = score;
-                    tg.HapticFeedback.impactOccurred('light');
-                    gameSpeed += 0.1;
+                    gameSpeed += 0.1; // Игра ускоряется
                 }
 
-                // Столкновение
+                // Столкновение (Используем новые X координаты)
                 if (
-                    pX < eX + en.w &&
-                    pX + playerCar.w > eX &&
+                    playerCar.x < en.x + en.w &&
+                    playerCar.x + playerCar.w > en.x &&
                     playerCar.y < en.y + en.h &&
                     playerCar.y + playerCar.h > en.y
                 ) {
@@ -711,13 +711,6 @@
                     enemiesNascar.splice(i, 1);
                 }
             }
-        }
-
-        function moveNascar(dir) {
-            playerCar.lane += dir;
-            if (playerCar.lane < 0) playerCar.lane = 0;
-            if (playerCar.lane > 2) playerCar.lane = 2;
-            tg.HapticFeedback.selectionChanged();
         }
         
         // --- ЛОГИКА ЗМЕЙКИ ---
