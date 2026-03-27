@@ -224,7 +224,6 @@
             <div class="g-btn" ontouchstart="moveRocket(1)" ontouchend="moveRocket(0)">▶</div>
         </div>
 
-        <!-- ОБНОВЛЕНО: КОНТРОЛЛЕРЫ NASCAR С ОТЖАТИЕМ КНОПКИ (как в ракете) -->
         <div class="controls-nascar" id="nascarCtrl" style="display:none;">
             <div class="g-btn-nascar" ontouchstart="moveNascar(-1)" ontouchend="moveNascar(0)">◀</div>
             <div class="g-btn-nascar" ontouchstart="moveNascar(1)" ontouchend="moveNascar(0)">▶</div>
@@ -585,9 +584,9 @@
         let gameLoop, score, snake, food, dx, dy, player, enemies, rocketDir = 0;
         const canvas = document.getElementById("gameCanvas"); const ctx = canvas.getContext("2d");
 
-        // ОБНОВЛЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ NASCAR (ПЛАВНОЕ УПРАВЛЕНИЕ)
-        let playerCar = { x: 132.5, y: 230, w: 55, h: 60 }; // x вместо lane
-        let nascarDir = 0; // Направление движения (-1 влево, 1 вправо)
+        // ОБНОВЛЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ NASCAR (ШИРОКИЕ МАШИНЫ)
+        let playerCar = { x: 127.5, y: 230, w: 45, h: 70 }; 
+        let nascarDir = 0; 
         let enemiesNascar = [];
         let gameSpeed = 5;
         let roadOffset = 0;
@@ -613,7 +612,7 @@
             if (type === 'snake') { snake = [{x:150,y:150}]; food = {x:80,y:80}; dx=10; dy=0; gameLoop = setInterval(drawSnake, 100); }
             else if (type === 'rocket') { player = {x:135, y:260}; enemies = []; gameLoop = setInterval(drawRocket, 20); }
             else if (type === 'nascar') { 
-                playerCar = { x: 132.5, y: 230, w: 55, h: 60 }; // Ставим по центру (150 - половина ширины)
+                playerCar = { x: 127.5, y: 230, w: 50, h: 70 }; 
                 nascarDir = 0;
                 enemiesNascar = []; 
                 gameSpeed = 5; 
@@ -624,9 +623,9 @@
 
         function exitGame() { clearInterval(gameLoop); document.getElementById('mainUI').style.display = 'flex'; document.getElementById('gameOverlay').style.display = 'none'; }
         
-        // --- ЛОГИКА NASCAR (ПЛАВНАЯ) ---
+        // --- ЛОГИКА NASCAR (РЕЗКАЯ И БЫСТРАЯ) ---
         function moveNascar(dir) {
-            nascarDir = dir; // Устанавливаем направление при нажатии
+            nascarDir = dir; 
         }
 
         function drawNascar() {
@@ -635,26 +634,22 @@
             roadOffset += gameSpeed;
             if (roadOffset > 300) roadOffset = 0;
             
-            // Заливка фона, если картинки еще грузятся
             ctx.fillStyle = "#333";
             ctx.fillRect(0, 0, 300, 300);
             
-            // Рисуем трассу
             if (imgBg.complete && imgBg.naturalWidth > 0) {
                 ctx.drawImage(imgBg, 0, roadOffset - 300, 300, 300);
                 ctx.drawImage(imgBg, 0, roadOffset, 300, 300);
-                ctx.drawImage(imgBoundL, 0, 0, 20, 300); // Левый отбойник шириной 20px
-                ctx.drawImage(imgBoundR, 280, 0, 20, 300); // Правый отбойник с 280px
+                ctx.drawImage(imgBoundL, 0, 0, 20, 300); 
+                ctx.drawImage(imgBoundR, 280, 0, 20, 300); 
             }
 
-            // ПЛАВНОЕ ДВИЖЕНИЕ ИГРОКА
-            playerCar.x += nascarDir * 5; // Скорость поворота
+            // ПЛАВНОЕ И РЕЗКОЕ ДВИЖЕНИЕ ИГРОКА (СКОРОСТЬ ПОВОРОТА 9)
+            playerCar.x += nascarDir * 9; 
 
-            // Не даем выехать за пределы трассы и на отбойники
             if (playerCar.x < 20) playerCar.x = 20; 
             if (playerCar.x > 280 - playerCar.w) playerCar.x = 280 - playerCar.w;
 
-            // Рисуем машину игрока
             if (imgPlayerCar.complete && imgPlayerCar.naturalWidth > 0) {
                 ctx.drawImage(imgPlayerCar, playerCar.x, playerCar.y, playerCar.w, playerCar.h);
             } else {
@@ -662,21 +657,19 @@
                 ctx.fillRect(playerCar.x, playerCar.y, playerCar.w, playerCar.h);
             }
 
-            // Спавн врагов на случайной Х координате
+            // Спавн широких врагов
             if (Math.random() < 0.02 && enemiesNascar.length < 2) {
-                // Враг спавнится между 20px (левый край) и 280px-ширина (правый край)
-                let randomX = 20 + Math.random() * (260 - 35); 
+                let randomX = 20 + Math.random() * (260 - 45); 
                 enemiesNascar.push({
                     x: randomX,
                     y: -100,
                     w: 55,
-                    h: 60,
+                    h: 70,
                     color: ['#ff3b30', '#ff9500', '#34c759'][Math.floor(Math.random()*3)],
                     passed: false
                 });
             }
 
-            // Движение врагов
             for (let i = enemiesNascar.length - 1; i >= 0; i--) {
                 let en = enemiesNascar[i];
                 en.y += gameSpeed * 0.7;
@@ -688,15 +681,14 @@
                     ctx.fillRect(en.x, en.y, en.w, en.h);
                 }
 
-                // Логика обгона
+                // Логика обгона (УСКОРЕНИЕ +0.4)
                 if (!en.passed && en.y > playerCar.y + playerCar.h) {
                     en.passed = true;
                     score++;
                     document.getElementById('gameScore').innerText = score;
-                    gameSpeed += 0.1; // Игра ускоряется
+                    gameSpeed += 0.4; 
                 }
 
-                // Столкновение (Используем новые X координаты)
                 if (
                     playerCar.x < en.x + en.w &&
                     playerCar.x + playerCar.w > en.x &&
